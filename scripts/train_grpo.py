@@ -12,8 +12,10 @@ GPU requirement: RTX 3090 24GB (with gradient checkpointing)
 """
 
 import argparse
+import json
 import os
 import sys
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -156,12 +158,34 @@ def main():
 
     # ---- Train ----
     print("Starting GRPO training...")
-    trainer.train()
+    train_result = trainer.train()
 
     # ---- Save ----
     print(f"Saving model to {args.output_dir}/final")
     trainer.save_model(f"{args.output_dir}/final")
     tokenizer.save_pretrained(f"{args.output_dir}/final")
+
+    # ---- Save training summary to results/ ----
+    os.makedirs("results", exist_ok=True)
+    summary = {
+        "model": args.model,
+        "reward": args.reward,
+        "num_epochs": args.num_epochs,
+        "batch_size": args.batch_size,
+        "grad_accum": args.grad_accum,
+        "effective_batch": args.batch_size * args.grad_accum * args.num_generations,
+        "num_generations": args.num_generations,
+        "learning_rate": args.lr,
+        "beta": args.beta,
+        "use_lora": args.use_lora,
+        "output_dir": args.output_dir,
+        "total_steps": train_result.global_step if train_result else None,
+        "train_loss": round(train_result.training_loss, 4) if train_result and hasattr(train_result, "training_loss") else None,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    with open("results/train_summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+    print(f"Training summary saved to: results/train_summary.json")
     print("Training complete!")
 
 
