@@ -38,8 +38,8 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=5e-7)
     parser.add_argument("--num_generations", type=int, default=5,
                         help="Number of completions per prompt (G in GRPO)")
-    parser.add_argument("--max_completion_length", type=int, default=512)
-    parser.add_argument("--max_prompt_length", type=int, default=512)
+    parser.add_argument("--max_completion_length", type=int, default=128)
+    parser.add_argument("--max_prompt_length", type=int, default=256)
     parser.add_argument("--beta", type=float, default=0.0,
                         help="KL penalty coefficient (0 = no KL)")
     parser.add_argument("--use_lora", action="store_true",
