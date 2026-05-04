@@ -1,4 +1,4 @@
-# MSF-GRPO：面向数学应用题求解的多源反馈融合强化学习微调方法
+# MSF-GRPO：面向数学推理的多源反馈融合强化学习微调方法
 
 ## Research Plan
 
@@ -55,7 +55,7 @@ GRPO (Group Relative Policy Optimization) [DeepSeek-R1]
 
 ### 论文标题
 
-**MSF-GRPO：面向数学应用题求解的多源反馈融合强化学习微调方法**
+**MSF-GRPO：面向数学推理的多源反馈融合强化学习微调方法**
 
 ### 核心贡献
 
