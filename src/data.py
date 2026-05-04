@@ -9,22 +9,36 @@ SYSTEM_PROMPT = (
     "then put your final numerical answer after #### ."
 )
 
+# Plain text prompt for base models (no chat template)
+BASE_PROMPT_TEMPLATE = "Question: {question}\nSolution: "
 
-def load_gsm8k(split="train"):
+
+def load_gsm8k(split="train", use_chat_template=False):
     """Load GSM8K dataset and format for GRPO training.
 
-    Returns a dataset with 'prompt' column (list of chat messages).
+    Args:
+        split: dataset split
+        use_chat_template: if True, use chat message format (for chat/instruct models).
+                          if False, use plain text format (for base models).
+
+    Returns a dataset with 'prompt' column.
     """
     ds = load_dataset("openai/gsm8k", "main", split=split)
 
-    def format_prompt(example):
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": example["question"]},
-        ]
-        return {"prompt": messages, "answer": example["answer"]}
+    if use_chat_template:
+        def format_chat(example):
+            messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": example["question"]},
+            ]
+            return {"prompt": messages, "answer": example["answer"]}
+        ds = ds.map(format_chat, remove_columns=ds.column_names)
+    else:
+        def format_base(example):
+            prompt = BASE_PROMPT_TEMPLATE.format(question=example["question"])
+            return {"prompt": prompt, "answer": example["answer"]}
+        ds = ds.map(format_base, remove_columns=ds.column_names)
 
-    ds = ds.map(format_prompt, remove_columns=ds.column_names)
     return ds
 
 

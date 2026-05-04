@@ -26,6 +26,7 @@ from peft import LoraConfig, get_peft_model
 
 from src.data import load_gsm8k
 from src.rewards import combined_rule_reward
+from src.eval import is_chat_model
 
 
 def parse_args():
@@ -114,8 +115,11 @@ def main():
         model.print_trainable_parameters()
 
     # ---- Load data ----
+    use_chat = is_chat_model(tokenizer)
+    print(f"Model type: {'chat/instruct' if use_chat else 'base'}")
+
     print("Loading GSM8K training data...")
-    train_dataset = load_gsm8k(split="train")
+    train_dataset = load_gsm8k(split="train", use_chat_template=use_chat)
     print(f"Training examples: {len(train_dataset)}")
 
     # ---- Reward function ----

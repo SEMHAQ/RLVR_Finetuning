@@ -4,11 +4,23 @@ import re
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from src.data import extract_answer, normalize_answer, SYSTEM_PROMPT
+from src.data import extract_answer, normalize_answer, SYSTEM_PROMPT, BASE_PROMPT_TEMPLATE
+
+
+def is_chat_model(tokenizer):
+    """Check if the tokenizer/model supports chat template."""
+    try:
+        tokenizer.apply_chat_template([{"role": "user", "content": "test"}])
+        return True
+    except Exception:
+        return False
 
 
 def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
     """Evaluate a model on GSM8K.
+
+    Automatically detects whether the model is a chat model or base model
+    and uses the appropriate prompting strategy.
 
     Args:
         model_path: path to the trained model or HuggingFace model ID
@@ -23,7 +35,7 @@ def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-    tokenizer.padding_side = "left"  # must be left for decoder-only generation
+    tokenizer.padding_side = "left"
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -34,6 +46,10 @@ def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
         trust_remote_code=True,
     )
     model.eval()
+
+    # Detect chat vs base model
+    use_chat = is_chat_model(tokenizer)
+    print(f"Model type: {'chat/instruct' if use_chat else 'base'}")
 
     ds = load_dataset("openai/gsm8k", "main", split=split)
 
@@ -47,13 +63,16 @@ def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
         prompts = []
         gt_answers = []
         for q, a in zip(batch["question"], batch["answer"]):
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": q},
-            ]
-            prompt_text = tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
+            if use_chat:
+                messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": q},
+                ]
+                prompt_text = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            else:
+                prompt_text = BASE_PROMPT_TEMPLATE.format(question=q)
             prompts.append(prompt_text)
             gt_answers.append(a)
 
@@ -70,7 +89,6 @@ def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
                 top_p=1.0,
             )
 
-        # Decode only the generated part
         generated = outputs[:, inputs["input_ids"].shape[1] :]
         completions = tokenizer.batch_decode(generated, skip_special_tokens=True)
 
