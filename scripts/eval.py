@@ -26,8 +26,8 @@ def parse_args():
     parser.add_argument("--model", type=str, required=True,
                         help="Model path or HuggingFace model ID")
     parser.add_argument("--split", type=str, default="test")
-    parser.add_argument("--max_new_tokens", type=int, default=512)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--max_new_tokens", type=int, default=256)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--tag", type=str, default=None,
                         help="Tag for result filename (default: auto from model name)")
     return parser.parse_args()

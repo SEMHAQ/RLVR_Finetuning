@@ -7,7 +7,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from src.data import extract_answer, normalize_answer, SYSTEM_PROMPT
 
 
-def evaluate_gsm8k(model_path, split="test", max_new_tokens=512, batch_size=8):
+def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
     """Evaluate a model on GSM8K.
 
     Args:
