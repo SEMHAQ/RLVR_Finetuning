@@ -31,3 +31,4 @@ __pycache__/
 # Environment
 .env
 *.env
+unifb/
