@@ -108,4 +108,4 @@ python scripts/eval.py --model outputs/grpo_baseline/final --batch_size 4
 代码会自动回退到默认 attention，只是训练速度会慢一些。
 
 **Q: 训练多久能看到效果？**
-GSM8K 训练集 7.5K 条，1 个 epoch 大约 1-3 小时（3090）。建议先跑 200 步看看 reward 曲线趋势。
+GSM8K 训练集 7.5K 条，GRPO 1 个 epoch 大约 5-8 小时（3090，batch_size=10）。建议先跑 200 步看看 reward 曲线趋势。
