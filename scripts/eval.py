@@ -30,6 +30,10 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--tag", type=str, default=None,
                         help="Tag for result filename (default: auto from model name)")
+    parser.add_argument("--use_chat", action="store_true", default=False,
+                        help="Force chat template prompting (default: auto-detect)")
+    parser.add_argument("--no_chat", action="store_true", default=False,
+                        help="Force plain text prompting (no chat template)")
     return parser.parse_args()
 
 
@@ -39,11 +43,20 @@ def main():
     print(f"Evaluating model: {args.model}")
     print(f"Dataset: gsm8k/{args.split}")
 
+    # Determine use_chat: explicit flag > auto-detect
+    if args.no_chat:
+        use_chat = False
+    elif args.use_chat:
+        use_chat = True
+    else:
+        use_chat = None  # auto-detect by model name
+
     results = evaluate_gsm8k(
         model_path=args.model,
         split=args.split,
         max_new_tokens=args.max_new_tokens,
         batch_size=args.batch_size,
+        use_chat=use_chat,
     )
 
     print(f"\n{'='*50}")

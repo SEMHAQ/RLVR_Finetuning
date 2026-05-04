@@ -1,32 +1,22 @@
 """Evaluation utilities for GRPO-trained models."""
 
-import re
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from src.data import extract_answer, normalize_answer, SYSTEM_PROMPT, BASE_PROMPT_TEMPLATE
 
 
-def is_chat_model(tokenizer):
-    """Check if the tokenizer/model supports chat template."""
-    try:
-        tokenizer.apply_chat_template([{"role": "user", "content": "test"}])
-        return True
-    except Exception:
-        return False
 
-
-def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
+def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32, use_chat=None):
     """Evaluate a model on GSM8K.
-
-    Automatically detects whether the model is a chat model or base model
-    and uses the appropriate prompting strategy.
 
     Args:
         model_path: path to the trained model or HuggingFace model ID
         split: dataset split to evaluate on
         max_new_tokens: maximum tokens to generate
         batch_size: evaluation batch size
+        use_chat: force chat (True) or base (False) prompting.
+                  None = auto-detect by model name (contains "Instruct"/"Chat" → chat, else base)
 
     Returns:
         dict with accuracy and per-example results
@@ -47,9 +37,11 @@ def evaluate_gsm8k(model_path, split="test", max_new_tokens=256, batch_size=32):
     )
     model.eval()
 
-    # Detect chat vs base model
-    use_chat = is_chat_model(tokenizer)
-    print(f"Model type: {'chat/instruct' if use_chat else 'base'}")
+    # Determine prompting strategy
+    if use_chat is None:
+        name_lower = model_path.lower()
+        use_chat = any(k in name_lower for k in ["instruct", "chat", "-it"])
+    print(f"Prompting: {'chat/instruct' if use_chat else 'base (plain text)'}")
 
     ds = load_dataset("openai/gsm8k", "main", split=split)
 
