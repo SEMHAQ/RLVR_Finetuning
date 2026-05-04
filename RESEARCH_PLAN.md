@@ -1,4 +1,4 @@
-# 基于多形式反馈与强化学习的大模型微调方法研究
+# 面向智能数学辅导的多源反馈强化学习推理增强方法
 
 ## Research Plan
 
@@ -6,7 +6,17 @@
 
 ## 一、研究背景与动机
 
-### 1.1 LLM 微调演进路线
+### 1.1 问题场景：智能数学辅导系统
+
+智能数学辅导系统（Intelligent Tutoring System, ITS）需要多维度评估学生的解题过程：
+
+- **答案正确性**：最终结果是否正确（规则可验证）
+- **推理过程质量**：解题步骤是否合理、完整（需 AI 评判）
+- **表达清晰度**：解题过程是否易读、结构化（需人类或 AI 偏好）
+
+现有 LLM 微调方法仅使用单一反馈信号（如 RLHF 的偏好对或 RLVR 的规则验证），无法同时满足 ITS 对多维度评估的需求。本文提出一种多源反馈融合的强化学习微调方法，使模型能够同时从多种反馈信号中学习，生成更高质量的数学解题过程。
+
+### 1.2 LLM 微调演进路线
 
 ```
 SFT (Supervised Fine-Tuning)
@@ -45,16 +55,14 @@ GRPO (Group Relative Policy Optimization) [DeepSeek-R1]
 
 ### 论文标题（暂定）
 
-**"UniFB: Unified Multi-Form Feedback Fusion for Reinforcement Learning Fine-Tuning of Large Language Models"**
-
-或中文：**基于统一多形式反馈融合的大语言模型强化学习微调方法**
+**面向智能数学辅导的多源反馈强化学习推理增强方法**
 
 ### 核心贡献
 
-1. **反馈统一建模框架**：提出将 pairwise preference、scalar rating、AI judgment、rule-based verification 四种反馈形式统一映射到共享 reward 空间的方法
-2. **自适应反馈融合机制**：基于训练阶段和信号质量动态调整各反馈源的权重，防止高方差信号主导
-3. **冲突感知的多目标优化**：在 GRPO 框架下实现多维反馈的 Pareto 优化，避免顺序优化的遗忘问题
-4. **跨任务实验验证**：在数学推理、代码生成、开放对话三个场景下验证方法有效性
+1. **面向 ITS 的多源反馈建模**：针对智能辅导系统中答案正确性、推理过程质量、表达清晰度三个评估维度，提出将规则反馈、AI 反馈、标量/偏好反馈统一映射到共享 reward 空间的方法
+2. **自适应反馈融合机制**：基于训练阶段和信号质量动态调整各反馈源的权重，防止高方差信号主导训练
+3. **冲突感知的 GRPO 优化**：在 GRPO 框架下实现多维反馈的融合优化，避免顺序优化的灾难性遗忘
+4. **数学推理增强实验**：在 GSM8K 等数学推理基准上验证方法有效性，展示多源反馈相比单一反馈的提升
 
 ---
 
@@ -184,10 +192,10 @@ $$\mathcal{L} = \mathcal{L}_{GRPO}^{fused} + \alpha \cdot \mathcal{L}_{consisten
 ### 4.1 基础设置
 
 **基础模型**：
-- Qwen2.5-7B / Qwen2.5-Math-7B（与 Scaf-GRPO 对齐，便于对比）
-- 可选：Llama-3.1-8B（验证泛化性）
+- Qwen2.5-Math-1.5B（主实验，3090 可训练）
+- 可选：Qwen2.5-Math-7B（扩展实验，需更大显存）
 
-**训练框架**：verl（与 Scaf-GRPO 一致）或 TRL / OpenRLHF
+**训练框架**：TRL（GRPOTrainer）
 
 **基线方法**：
 | 基线 | 类型 | 说明 |
@@ -196,58 +204,43 @@ $$\mathcal{L} = \mathcal{L}_{GRPO}^{fused} + \alpha \cdot \mathcal{L}_{consisten
 | DPO | 单一 pairwise | 标准偏好优化 |
 | RLAIF | 单一 AI feedback | Constitutional AI 风格 |
 | MO-GRPO | 多目标（简单归一化） | 方差感知但无融合 |
-| SPO | 多维顺序优化 | 顺序对齐，有遗忘 |
-| UniFB (Ours) | 多形式融合 | 本文方法 |
+| UniFB (Ours) | 多源融合 | 本文方法 |
 
-### 4.2 实验场景
+### 4.2 实验场景：数学推理增强
 
-**场景 1：数学推理（可验证任务）**
+**主数据集**：GSM8K（7.5K 训练 / 1.3K 测试）
 
-- 数据集：MATH-500, AIME, AMC, GSM8K
-- 反馈形式组合：
-  - Rule-based：答案正确性验证
-  - Scalar：过程评分（CoT 质量打分）
-  - AI Feedback：LLM 对推理过程的评判
-- 评测：pass@1 accuracy
-- 预期：三反馈融合 > 单独 rule reward（GRPO baseline）
+**扩展数据集**：MATH-500（验证泛化性，可选）
 
-**场景 2：代码生成（半可验证任务）**
+**多源反馈设计**（对应 ITS 的三个评估维度）：
 
-- 数据集：HumanEval, MBPP, LiveCodeBench
-- 反馈形式组合：
-  - Rule-based：测试用例通过率
-  - Pairwise：人类对代码风格/可读性的偏好
-  - AI Feedback：LLM 对代码质量的评分
-- 评测：pass@1, test case 覆盖率, 代码质量分
-- 预期：补充 pairwise/AI feedback 可提升代码可读性，不牺牲正确性
+| 反馈维度 | ITS 含义 | 信号来源 | 实现方式 |
+|---------|---------|---------|---------|
+| 答案正确性 | 学生最终答案是否正确 | 规则验证 | 提取 #### 后数字，与 ground truth 比对 |
+| 推理过程质量 | 解题步骤是否合理完整 | AI 反馈 | 用 LLM 对 CoT 过程评分（1-5 分） |
+| 表达清晰度 | 解题过程是否易读 | 标量评分 | 格式规范性 + 步骤完整性打分 |
 
-**场景 3：开放对话（不可验证任务）**
-
-- 数据集：AlpacaEval, MT-Bench, HH-RLHF
-- 反馈形式组合：
-  - Pairwise：人类偏好标注
-  - Scalar：Likert 评分
-  - AI Feedback：GPT-4 评分
-- 评测：win rate, GPT-4 score, 多维度评分
-- 预期：融合多信号比单一 DPO 更稳定、更全面
+**评测指标**：
+- 主指标：pass@1 accuracy（答案正确率）
+- 辅助指标：推理过程质量评分（GPT-4 评判）、格式规范性
 
 ### 4.3 消融实验
 
 | 消融项 | 目的 |
 |--------|------|
-| 去掉 Rule-based reward | 验证可验证信号的贡献 |
-| 去掉 AI Feedback | 验证 AI 反馈的补充作用 |
-| 去掉 Pairwise | 验证人类偏好的精细对齐作用 |
+| 仅规则反馈（GRPO baseline） | 验证多源相比单源的增益 |
+| 规则 + AI 反馈 | 验证 AI 评判推理过程的贡献 |
+| 规则 + 标量反馈 | 验证表达清晰度信号的贡献 |
+| 三源融合（完整方法） | 完整效果 |
 | 固定权重 vs 自适应权重 | 验证动态融合的必要性 |
-| 无 Pareto 约束 | 验证冲突处理的有效性 |
-| 顺序优化 vs 并行融合 | 对比 SPO 的顺序方式与本文并行方式 |
+| 无冲突处理 | 验证 Pareto 约束的有效性 |
 
 ### 4.4 分析实验
 
-1. **Reward Hacking 分析**：监控各维度 reward 的变化曲线，验证 MO-GRPO 发现的问题是否被解决
+1. **Reward Hacking 分析**：监控各维度 reward 的变化曲线，验证多源融合是否缓解单一信号过拟合
 2. **训练稳定性**：对比不同方法的 reward 方差和 KL 散度变化
-3. **反馈覆盖率**：分析每个反馈源在训练各阶段的贡献度（梯度范数占比）
-4. **泛化性**：在 OOD 任务上评测（如数学训练 → 代码评测）
+3. **反馈贡献度**：分析每个反馈源在训练各阶段的梯度范数占比
+4. **案例分析**：展示多源反馈融合后模型生成的解题过程质量提升（对比单反馈）
 
 ---
 
@@ -293,28 +286,28 @@ $$\mathcal{L} = \mathcal{L}_{GRPO}^{fused} + \alpha \cdot \mathcal{L}_{consisten
 
 ```
 1. Introduction
-   - LLM alignment 的重要性
-   - 现有方法的局限（单一反馈）
-   - 本文贡献
+   - 智能数学辅导系统需要多维度评估学生解题
+   - 现有 LLM 微调方法仅使用单一反馈信号的局限
+   - 本文贡献：多源反馈融合框架
 
 2. Related Work
    - RLHF / DPO / GRPO 演进
    - RLAIF (Constitutional AI)
    - RLVR (DeepSeek-R1)
    - Multi-objective RL for LLM (SPO, MO-GRPO)
+   - 智能辅导系统中的 LLM 应用
 
-3. Method: UniFB
-   - 3.1 Feedback Encoding（统一编码）
-   - 3.2 Adaptive Fusion（自适应融合）
-   - 3.3 Conflict-Aware GRPO（冲突感知优化）
-   - 3.4 Training Objective（综合损失）
+3. Method
+   - 3.1 问题定义：ITS 中的多维度评估需求
+   - 3.2 多源反馈编码（规则 / AI / 标量 → 统一 reward）
+   - 3.3 自适应反馈融合
+   - 3.4 冲突感知 GRPO 训练
 
 4. Experiments
-   - 4.1 数学推理
-   - 4.2 代码生成
-   - 4.3 开放对话
-   - 4.4 消融实验
-   - 4.5 分析
+   - 4.1 实验设置（GSM8K + Qwen2.5-Math-1.5B）
+   - 4.2 主实验：多源 vs 单源反馈
+   - 4.3 消融实验
+   - 4.4 分析（reward 曲线、案例展示）
 
 5. Conclusion
 ```
@@ -335,3 +328,67 @@ $$\mathcal{L} = \mathcal{L}_{GRPO}^{fused} + \alpha \cdot \mathcal{L}_{consisten
 | Scaf-GRPO | 解决 learning cliff，梯度 hint 机制 |
 | RLVR-World | RLVR 向非推理任务的扩展 |
 | RL Meets LLMs Survey | 全景视角，识别研究空白 |
+
+---
+
+## 十、参考文献（References）
+
+### 核心方法论文
+
+[1] Long Ouyang, Jeff Wu, Xu Jiang, et al. "Training Language Models to Follow Instructions with Human Feedback." *NeurIPS*, 2022. arXiv:2203.02155.
+
+[2] Yuntao Bai, Saurav Kadavath, Sandipan Kundu, et al. "Constitutional AI: Harmlessness from AI Feedback." arXiv:2212.08073, 2022.
+
+[3] Rafael Rafailov, Archit Sharma, Eric Mitchell, Stefano Ermon, Christopher D. Manning, Chelsea Finn. "Direct Preference Optimization: Your Language Model Is Secretly a Reward Model." *NeurIPS*, 2023. arXiv:2305.18290.
+
+[4] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov. "Proximal Policy Optimization Algorithms." arXiv:1707.06347, 2017.
+
+[5] Zhihong Shao, Peiyi Wang, Qingxiu Zhu, et al. "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models." arXiv:2402.03300, 2024. (GRPO 算法首次提出)
+
+[6] DeepSeek-AI. "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning." arXiv:2501.12948, 2025.
+
+### 多目标 / 多维对齐论文
+
+[7] Wenxuan Zhou, Ravi B. Sojitra, et al. "SPO: Sequential Preference Optimization for Multi-Dimensional Alignment." arXiv:2411.18084, 2024.
+
+[8] MO-GRPO: Mitigating Reward Hacking via Multi-Objective Optimization in Group Relative Policy Optimization. arXiv, 2025. (待确认精确 arXiv ID)
+
+[9] Scaf-GRPO: Tackling the Learning Cliff in Group Relative Policy Optimization. arXiv:2504.15158, 2025.
+
+[10] Multi-Objective Reinforcement Learning for LLM Optimization: A Survey. arXiv, 2024. (待确认精确 arXiv ID)
+
+### RLVR 扩展论文
+
+[11] RLVR-World: Training World Models with Reinforcement Learning and Verifiable Rewards. arXiv, 2025. (待确认精确 arXiv ID)
+
+[12] Reinforcement Learning for Large Language Models: A Survey. arXiv:2404.12289, 2024.
+
+### 评测基准与基座模型
+
+[13] Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, et al. "Training Verifiers to Solve Math Word Problems." arXiv:2110.14168, 2021. (GSM8K 数据集)
+
+[14] OpenAI. "GPT-4 Technical Report." arXiv:2303.08774, 2023.
+
+[15] Qwen Team. "Qwen2.5-Math Technical Report: Toward Mathematical Expert Model." arXiv:2409.12122, 2024.
+
+[16] Qwen Team. "Qwen2.5 Technical Report." arXiv:2412.15115, 2024.
+
+### 其他相关工作
+
+[17] Hugo Touvron, Louis Martin, Kevin Stone, et al. "Llama 2: Open Foundation and Fine-Tuned Chat Models." arXiv:2307.09288, 2023.
+
+[18] Leandro von Werra, Younes Belkada, Lewis Tunstall, et al. "TRL: Transformer Reinforcement Learning." GitHub: huggingface/trl, 2020–2025.
+
+---
+
+### 论文对比表中可引用的公开 GSM8K 数据
+
+| 模型 | GSM8K 准确率 | 来源 |
+|------|-------------|------|
+| GPT-4 (few-shot) | ~92.0% | [14] OpenAI, 2023 |
+| DeepSeek-R1 | ~97.3% | [6] DeepSeek-AI, 2025 |
+| Qwen2.5-Math-7B (CoT) | ~84% | [15] Qwen Team, 2024 |
+| Qwen2.5-Math-1.5B (few-shot) | ~65% | [15] Qwen Team, 2024 |
+| Qwen2.5-Math-1.5B (base, 本实验) | 44.28% | 本研究 baseline 评测 |
+
+> **引用前提**：评测设置与原文一致（GSM8K 官方 test 1319 题 + `####` 答案提取 + pass@1 accuracy），可直接对比。
