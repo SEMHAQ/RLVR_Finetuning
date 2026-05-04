@@ -1,0 +1,47 @@
+# GRPO Baseline Config
+# Model: Qwen2.5-Math-1.5B on GSM8K
+# Target GPU: RTX 3090 24GB
+
+model:
+  name: "Qwen/Qwen2.5-Math-1.5B"
+  torch_dtype: "bfloat16"
+  attn_implementation: "flash_attention_2"  # set to null if flash-atnot installed
+
+data:
+  dataset: "gsm8k"
+  split: "train"
+  max_prompt_length: 512
+  num_samples: 5  # number of responses per prompt (G in GRPO)
+
+training:
+  output_dir: "outputs/grpo_baseline"
+  num_train_epochs: 1
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8  # effective batch = 2 * 8 * 5 = 80
+  learning_rate: 5.0e-7
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.1
+  max_completion_length: 512
+  num_generations: 5  # G: number of completions per prompt
+  beta: 0.0  # KL penalty coefficient (0 = no KL, following Scaf-GRPO)
+  loss_type: "grpo"
+  logging_steps: 10
+  save_steps: 200
+  eval_steps: 200
+  bf16: true
+  gradient_checkpointing: true
+  max_grad_norm: 1.0
+  seed: 42
+
+reward:
+  type: "rule_based"  # rule_based | scalar | ai_feedback | fused
+  rule:
+    correct_reward: 1.0
+    incorrect_reward: 0.0
+    format_reward: 0.1  # bonus for following answer format
+
+evaluation:
+  eval_dataset: "gsm8k"
+  eval_split: "test"
+  max_new_tokens: 512
+  temperature: 0.0

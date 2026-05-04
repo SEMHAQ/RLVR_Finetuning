@@ -1,0 +1,33 @@
+# claude files
+.claude/
+
+# binary files
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+
+# Training outputs
+outputs/
+wandb/
+*.pt
+*.bin
+*.safetensors
+
+# Data (large files)
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+*.env
