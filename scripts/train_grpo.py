@@ -45,6 +45,8 @@ def parse_args():
     parser.add_argument("--use_lora", action="store_true",
                         help="Use LoRA for memory-efficient training")
     parser.add_argument("--lora_rank", type=int, default=16)
+    parser.add_argument("--max_samples", type=int, default=0,
+                        help="Limit training samples (0 = use all)")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--logging_steps", type=int, default=10)
     parser.add_argument("--save_steps", type=int, default=200)
@@ -121,6 +123,8 @@ def main():
 
     print("Loading GSM8K training data...")
     train_dataset = load_gsm8k(split="train", use_chat_template=use_chat)
+    if args.max_samples > 0:
+        train_dataset = train_dataset.select(range(min(args.max_samples, len(train_dataset))))
     print(f"Training examples: {len(train_dataset)}")
 
     # ---- Reward function ----
