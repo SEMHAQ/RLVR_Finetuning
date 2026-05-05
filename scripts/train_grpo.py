@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import GRPOConfig, GRPOTrainer
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig
 
 from src.data import load_gsm8k
 from src.rewards import combined_rule_reward
@@ -85,12 +85,9 @@ def main():
     print(f"Loading model: {args.model}")
     model_kwargs = {
         "torch_dtype": torch.bfloat16,
+        "device_map": "auto",
         "trust_remote_code": True,
     }
-
-    # LoRA: let trainer handle device placement; full: use device_map
-    if not args.use_lora:
-        model_kwargs["device_map"] = "auto"
 
     # Try flash_attention_2, fall back to default
     try:
@@ -104,10 +101,10 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # ---- Optional LoRA ----
+    # ---- Optional LoRA (let GRPOTrainer handle it) ----
     lora_config = None
     if args.use_lora:
-        print(f"Applying LoRA (rank={args.lora_rank})")
+        print(f"Using LoRA (rank={args.lora_rank})")
         lora_config = LoraConfig(
             r=args.lora_rank,
             lora_alpha=args.lora_rank * 2,
@@ -116,8 +113,6 @@ def main():
             lora_dropout=0.05,
             task_type="CAUSAL_LM",
         )
-        model = get_peft_model(model, lora_config)
-        model.print_trainable_parameters()
 
     # ---- Load data ----
     # Auto-detect: model name contains "Instruct"/"Chat"/"-it" → use chat template
@@ -167,6 +162,7 @@ def main():
         reward_funcs=reward_fn,
         train_dataset=train_dataset,
         processing_class=tokenizer,
+        peft_config=lora_config,
     )
 
     # ---- Train ----
