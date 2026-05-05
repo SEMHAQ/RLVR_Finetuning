@@ -5,7 +5,6 @@ Phase 0: Reproduce GRPO on GSM8K with Qwen2.5-Math-1.5B
 
 Usage:
     python scripts/train_grpo.py
-    python scripts/train_grpo.py --config configs/grpo_baseline.yaml
     python scripts/train_grpo.py --model Qwen/Qwen2.5-Math-1.5B --num_epochs 1
 
 GPU requirement: RTX 3090 24GB (with gradient checkpointing)
@@ -20,9 +19,9 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import GRPOConfig, GRPOTrainer
-from peft import LoraConfig, prepare_model_for_kbit_training
+from peft import LoraConfig
 
 from src.data import load_gsm8k
 from src.rewards import combined_rule_reward
@@ -33,19 +32,17 @@ def parse_args():
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-Math-1.5B")
     parser.add_argument("--output_dir", type=str, default="outputs/grpo_baseline")
     parser.add_argument("--num_epochs", type=int, default=1)
-    parser.add_argument("--batch_size", type=int, default=9)
+    parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--grad_accum", type=int, default=1)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--num_generations", type=int, default=3,
                         help="Number of completions per prompt (G in GRPO)")
-    parser.add_argument("--max_completion_length", type=int, default=384)
+    parser.add_argument("--max_completion_length", type=int, default=256)
     parser.add_argument("--max_prompt_length", type=int, default=256)
     parser.add_argument("--beta", type=float, default=0.0,
                         help="KL penalty coefficient (0 = no KL)")
     parser.add_argument("--use_lora", action="store_true",
                         help="Use LoRA for memory-efficient training")
-    parser.add_argument("--quantize", action="store_true",
-                        help="Use 4-bit quantization (QLoRA) for even lower memory")
     parser.add_argument("--lora_rank", type=int, default=16)
     parser.add_argument("--max_samples", type=int, default=0,
                         help="Limit training samples (0 = use all)")
@@ -85,40 +82,18 @@ def main():
 
     # ---- Load model ----
     print(f"Loading model: {args.model}")
-    model_kwargs = {
-        "torch_dtype": torch.bfloat16,
-        "device_map": "auto",
-        "trust_remote_code": True,
-    }
-
-    # QLoRA: 4-bit quantization
-    if args.use_lora and args.quantize:
-        print("Using 4-bit quantization (QLoRA)")
-        model_kwargs["quantization_config"] = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_quant_type="nf4",
-        )
-
-    # Try flash_attention_2, fall back to default
-    try:
-        model_kwargs["attn_implementation"] = "flash_attention_2"
-        model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
-    except Exception:
-        model_kwargs.pop("attn_implementation", None)
-        model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
-
-    # Prepare model for k-bit training (fixes dtype mismatch in QLoRA)
-    if args.use_lora and args.quantize:
-        model = prepare_model_for_kbit_training(model)
-        # Force lm_head to match compute dtype
-        model.lm_head = model.lm_head.to(torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model,
+        torch_dtype=torch.bfloat16,
+        device_map="auto",
+        trust_remote_code=True,
+    )
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # ---- Optional LoRA (let GRPOTrainer handle it) ----
+    # ---- Optional LoRA ----
     lora_config = None
     if args.use_lora:
         print(f"Using LoRA (rank={args.lora_rank})")
@@ -132,7 +107,6 @@ def main():
         )
 
     # ---- Load data ----
-    # Auto-detect: model name contains "Instruct"/"Chat"/"-it" → use chat template
     name_lower = args.model.lower()
     use_chat = any(k in name_lower for k in ["instruct", "chat", "-it"])
     print(f"Prompting: {'chat/instruct' if use_chat else 'base (plain text)'}")
@@ -162,8 +136,8 @@ def main():
         beta=args.beta,
         loss_type="grpo",
         bf16=True,
-        gradient_checkpointing=not args.use_lora,
-        gradient_checkpointing_kwargs={"use_reentrant": False} if not args.use_lora else None,
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
         max_grad_norm=1.0,
         logging_steps=args.logging_steps,
         save_steps=args.save_steps,
