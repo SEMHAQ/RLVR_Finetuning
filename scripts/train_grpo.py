@@ -111,6 +111,8 @@ def main():
     # Prepare model for k-bit training (fixes dtype mismatch in QLoRA)
     if args.use_lora and args.quantize:
         model = prepare_model_for_kbit_training(model)
+        # Force lm_head to match compute dtype
+        model.lm_head = model.lm_head.to(torch.bfloat16)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     if tokenizer.pad_token is None:
