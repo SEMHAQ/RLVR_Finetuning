@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-Math-1.5B")
     parser.add_argument("--output_dir", type=str, default="outputs/grpo_baseline")
     parser.add_argument("--num_epochs", type=int, default=1)
-    parser.add_argument("--batch_size", type=int, default=10)
+    parser.add_argument("--batch_size", type=int, default=9)
     parser.add_argument("--grad_accum", type=int, default=1)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--num_generations", type=int, default=3,
