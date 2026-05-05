@@ -6,11 +6,11 @@
   "grad_accum": 1,
   "effective_batch": 72,
   "num_generations": 3,
-  "learning_rate": 1e-05,
+  "learning_rate": 2e-05,
   "beta": 0.0,
   "use_lora": true,
-  "output_dir": "outputs/grpo_v2_lora",
-  "total_steps": 125,
+  "output_dir": "outputs/grpo_v3_lora",
+  "total_steps": 934,
   "train_loss": 0.0,
-  "timestamp": "2026-05-05 13:17:52"
+  "timestamp": "2026-05-05 20:14:29"
 }
