@@ -35,10 +35,10 @@ def parse_args():
     parser.add_argument("--num_epochs", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=10)
     parser.add_argument("--grad_accum", type=int, default=1)
-    parser.add_argument("--lr", type=float, default=5e-7)
-    parser.add_argument("--num_generations", type=int, default=5,
+    parser.add_argument("--lr", type=float, default=5e-6)
+    parser.add_argument("--num_generations", type=int, default=3,
                         help="Number of completions per prompt (G in GRPO)")
-    parser.add_argument("--max_completion_length", type=int, default=128)
+    parser.add_argument("--max_completion_length", type=int, default=512)
     parser.add_argument("--max_prompt_length", type=int, default=256)
     parser.add_argument("--beta", type=float, default=0.0,
                         help="KL penalty coefficient (0 = no KL)")
