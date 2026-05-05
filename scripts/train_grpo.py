@@ -87,6 +87,7 @@ def main():
         os.environ["WANDB_DISABLED"] = "true"
     else:
         os.environ["WANDB_PROJECT"] = args.wandb_project
+        os.environ["WANDB_MODE"] = "offline"
 
     # ---- Load model ----
     print(f"Loading model: {args.model}")
