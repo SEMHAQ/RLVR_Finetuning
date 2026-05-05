@@ -1,6 +1,7 @@
 {
   "model": "Qwen/Qwen2.5-Math-1.5B",
-  "reward": "combined_rule",
+  "reward": "fused",
+  "fusion_method": "adaptive",
   "num_epochs": 1,
   "batch_size": 24,
   "grad_accum": 1,
@@ -9,8 +10,8 @@
   "learning_rate": 2e-05,
   "beta": 0.0,
   "use_lora": true,
-  "output_dir": "outputs/grpo_v3_lora",
-  "total_steps": 934,
+  "output_dir": "outputs/grpo_msf_test",
+  "total_steps": 25,
   "train_loss": 0.0,
-  "timestamp": "2026-05-05 20:14:29"
+  "timestamp": "2026-05-05 21:20:21"
 }
