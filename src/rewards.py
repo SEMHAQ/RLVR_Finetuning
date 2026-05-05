@@ -104,33 +104,31 @@ def ai_feedback_reward(completions, prompt=None, **kwargs):
     raise NotImplementedError("AI feedback reward not yet implemented")
 
 
-def fused_reward(completions, answer=None, weights=None, **kwargs):
-    """Fused multi-source reward.
+def fused_reward(completions, answer=None, fusion_method="adaptive", **kwargs):
+    """Fused multi-source reward (MSF-GRPO).
 
-    Combines multiple reward signals with configurable weights.
-    This is the core of the UniFB method.
+    Combines rule, AI, and scalar feedback with adaptive weighting.
 
     Args:
         completions: list of model completion strings
         answer: list of ground truth answer strings
-        weights: dict of {source_name: weight}
+        fusion_method: 'adaptive' (variance-aware) or 'fixed' (static weights)
 
     Returns:
         list of float rewards
     """
-    if weights is None:
-        weights = {"rule": 1.0, "format": 1.0}
+    from src.feedback.rule import rule_score
+    from src.feedback.ai import ai_score
+    from src.feedback.scalar import scalar_score
+    from src.feedback.fusion import AdaptiveFusion
 
-    total_rewards = [0.0] * len(completions)
+    sources = {
+        "rule": (lambda c, **_: rule_score(c, answer=answer), 1.0),
+        "ai": (ai_score, 0.8),
+        "scalar": (scalar_score, 0.5),
+    }
 
-    if "rule" in weights:
-        rule_r = rule_based_reward(completions, answer=answer)
-        total_rewards = [r + weights["rule"] * vr for r, vr in zip(total_rewards, rule_r)]
+    fusion = AdaptiveFusion(sources, method=fusion_method)
+    fused, _, _ = fusion.compute_rewards(completions, **kwargs)
 
-    if "format" in weights:
-        format_r = format_reward(completions)
-        total_rewards = [r + weights["format"] * vr for r, vr in zip(total_rewards, format_r)]
-
-    # TODO: Phase 2 - add ai_feedback and scalar rewards
-
-    return total_rewards
+    return fused

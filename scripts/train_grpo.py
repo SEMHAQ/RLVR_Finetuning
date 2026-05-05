@@ -50,14 +50,17 @@ def parse_args():
     parser.add_argument("--logging_steps", type=int, default=10)
     parser.add_argument("--save_steps", type=int, default=200)
     parser.add_argument("--reward", type=str, default="combined_rule",
-                        choices=["rule", "format", "combined_rule"],
+                        choices=["rule", "format", "combined_rule", "fused"],
                         help="Reward function to use")
+    parser.add_argument("--fusion_method", type=str, default="adaptive",
+                        choices=["adaptive", "fixed"],
+                        help="Fusion method for 'fused' reward")
     parser.add_argument("--wandb_project", type=str, default="unifb",
                         help="WandB project name (set to 'none' to disable)")
     return parser.parse_args()
 
 
-def get_reward_fn(reward_type):
+def get_reward_fn(reward_type, fusion_method="adaptive"):
     """Get the reward function by name."""
     if reward_type == "rule":
         from src.rewards import rule_based_reward
@@ -67,6 +70,11 @@ def get_reward_fn(reward_type):
         return format_reward
     elif reward_type == "combined_rule":
         return combined_rule_reward
+    elif reward_type == "fused":
+        from src.rewards import fused_reward
+        def _fused(completions, **kwargs):
+            return fused_reward(completions, fusion_method=fusion_method, **kwargs)
+        return _fused
     else:
         raise ValueError(f"Unknown reward type: {reward_type}")
 
@@ -118,8 +126,8 @@ def main():
     print(f"Training examples: {len(train_dataset)}")
 
     # ---- Reward function ----
-    reward_fn = get_reward_fn(args.reward)
-    print(f"Reward function: {args.reward}")
+    reward_fn = get_reward_fn(args.reward, fusion_method=args.fusion_method)
+    print(f"Reward function: {args.reward}" + (f" (fusion: {args.fusion_method})" if args.reward == "fused" else ""))
 
     # ---- Training config ----
     training_args = GRPOConfig(
@@ -170,6 +178,7 @@ def main():
     summary = {
         "model": args.model,
         "reward": args.reward,
+        "fusion_method": args.fusion_method if args.reward == "fused" else None,
         "num_epochs": args.num_epochs,
         "batch_size": args.batch_size,
         "grad_accum": args.grad_accum,
