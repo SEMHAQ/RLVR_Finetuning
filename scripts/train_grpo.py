@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import GRPOConfig, GRPOTrainer
-from peft import LoraConfig
+from peft import LoraConfig, prepare_model_for_kbit_training
 
 from src.data import load_gsm8k
 from src.rewards import combined_rule_reward
@@ -107,6 +107,10 @@ def main():
     except Exception:
         model_kwargs.pop("attn_implementation", None)
         model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
+
+    # Prepare model for k-bit training (fixes dtype mismatch in QLoRA)
+    if args.use_lora and args.quantize:
+        model = prepare_model_for_kbit_training(model)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     if tokenizer.pad_token is None:
