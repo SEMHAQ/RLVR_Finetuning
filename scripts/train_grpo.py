@@ -20,7 +20,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import GRPOConfig, GRPOTrainer
 from peft import LoraConfig
 
@@ -44,6 +44,8 @@ def parse_args():
                         help="KL penalty coefficient (0 = no KL)")
     parser.add_argument("--use_lora", action="store_true",
                         help="Use LoRA for memory-efficient training")
+    parser.add_argument("--quantize", action="store_true",
+                        help="Use 4-bit quantization (QLoRA) for even lower memory")
     parser.add_argument("--lora_rank", type=int, default=16)
     parser.add_argument("--max_samples", type=int, default=0,
                         help="Limit training samples (0 = use all)")
@@ -88,6 +90,15 @@ def main():
         "device_map": "auto",
         "trust_remote_code": True,
     }
+
+    # QLoRA: 4-bit quantization
+    if args.use_lora and args.quantize:
+        print("Using 4-bit quantization (QLoRA)")
+        model_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_quant_type="nf4",
+        )
 
     # Try flash_attention_2, fall back to default
     try:
