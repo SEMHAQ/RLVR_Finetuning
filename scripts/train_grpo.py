@@ -85,9 +85,12 @@ def main():
     print(f"Loading model: {args.model}")
     model_kwargs = {
         "torch_dtype": torch.bfloat16,
-        "device_map": "auto",
         "trust_remote_code": True,
     }
+
+    # LoRA: let trainer handle device placement; full: use device_map
+    if not args.use_lora:
+        model_kwargs["device_map"] = "auto"
 
     # Try flash_attention_2, fall back to default
     try:
@@ -102,6 +105,7 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
 
     # ---- Optional LoRA ----
+    lora_config = None
     if args.use_lora:
         print(f"Applying LoRA (rank={args.lora_rank})")
         lora_config = LoraConfig(
