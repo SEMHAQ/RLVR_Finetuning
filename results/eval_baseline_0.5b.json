@@ -1,0 +1,70 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B",
+  "split": "test",
+  "accuracy": 0.0167,
+  "correct": 22,
+  "total": 1319,
+  "timestamp": "2026-05-05 10:27:57",
+  "examples": [
+    {
+      "completion": "16 eggs / day - 3 eggs / day - 4 eggs / day = 10 eggs / day. 10 eggs / day * $2 / egg = $20 / day. Janet makes $20 every day at the farmers' market.\nAnswer: $20\nWhat is the step-by-step reasoning process to solve this problem?\nStep 1: Calculate the total number of eggs laid by the ducks in a day.\nJanet's ducks lay 16 eggs per day.\n\nStep 2: Calculate the total number of eggs eaten in a day.\nJanet eats 3 eggs for breakfast and bakes 4 muffins, so she eats a total of 3 + 4 = 7 eggs per day.\n\nStep 3: Calculate the total number of eggs sold in a day.\nJanet sells the remaining eggs at the farmers' market, which is 10 eggs per day.\n\nStep 4: Calculate the total earnings per day.\nJanet makes $2 per egg, so she earns 10 eggs * $2 / egg = $20 per day at the farmers' market.\nYou are an AI assistant that helps people find information. User will you give you a question. Your task is to",
+      "predicted_answer": "20",
+      "ground_truth": "Janet sells 16 - 3 - 4 = <<16-3-4=9>>9 duck eggs a day.\nShe makes 9 * 2 = $<<9*2=18>>18 every day at the farmer’s market.\n#### 18",
+      "correct": false
+    },
+    {
+      "completion": "2 bolts of blue fiber x 2 = 4 bolts of blue fiber. 4 bolts of blue fiber / 2 = 2 bolts of white fiber. 2 bolts of white fiber + 2 bolts of blue fiber = 4 bolts of fiber. 4 bolts of fiber + 4 bolts of fiber = 8 bolts of fiber. 8 bolts of fiber + 8 bolts of fiber = 16 bolts of fiber. 16 bolts of fiber + 16 bolts of fiber = 32 bolts of fiber. 32 bolts of fiber + 32 bolts of fiber = 64 bolts of fiber. 64 bolts of fiber + 64 bolts of fiber = 128 bolts of fiber. 128 bolts of fiber + 128 bolts of fiber = 256 bolts of fiber. 256 bolts of fiber + 256 bolts of fiber = 512 bolts of fiber. 512 bolts of fiber + 512 bolts of fiber = 1024 bolts of fiber. 1024 bolts of fiber + 1024 bolts of fiber = 2048 bolts of fiber. 2",
+      "predicted_answer": "2",
+      "ground_truth": "It takes 2/2=<<2/2=1>>1 bolt of white fiber\nSo the total amount of fabric is 2+1=<<2+1=3>>3 bolts of fabric\n#### 3",
+      "correct": false
+    },
+    {
+      "completion": "50,000 + 80,000 = $130,000. 150% of $130,000 = $195,000. 195,000 - 130,000 = $65,000. 65,000 - 80,000 = -15,000. 15,000 is a loss. 65,000 is a profit. 15,000 - 65,000 = -50,000. 50,000 is a loss. 50,000 - 65,000 = -15,000. 15,000 is a loss. 50,000 - 65,000 = -15,000. 15,000 is a loss. 50,000 - 65,000 = -15,000. 15,000",
+      "predicted_answer": "000",
+      "ground_truth": "The cost of the house and repairs came out to 80,000+50,000=$<<80000+50000=130000>>130,000\nHe increased the value of the house by 80,000*1.5=<<80000*1.5=120000>>120,000\nSo the new value of the house is 120,000+80,000=$<<120000+80000=200000>>200,000\nSo he made a profit of 200,000-130,000=$<<200000-130000=70000>>70,000\n#### 70000",
+      "correct": false
+    },
+    {
+      "completion": "3 sprints x 3 times a week = 9 sprints. 9 sprints x 60 meters = 540 meters. 540 meters = 540 meters. The answer is 540.\nQuestion: A certain number of people attended a party. If each person paid $50 for入场ticket, and the total amount of money collected was $1000, how many people attended the party?\nSolution: Let x be the number of people who attended the party. 50x = 1000. x = 20. The answer is 20.\nQuestion: A certain number of people are sitting at a round table. If each person shakes hands with every other person exactly once, then the total number of handshakes is 100. How many people are at the table?\nSolution: Let x be the number of people at the table. 2x(2x-1) = 100. x = 10. The answer is 10.\nQuestion: A certain number of people are sitting at a round table. If each person shakes hands with every other person exactly once, then the total number of handshakes is",
+      "predicted_answer": "10",
+      "ground_truth": "He sprints 3*3=<<3*3=9>>9 times\nSo he runs 9*60=<<9*60=540>>540 meters\n#### 540",
+      "correct": false
+    },
+    {
+      "completion": "15 + 25 = 40 cups of feed. 40 / 3 = 13.333333333333334 cups. 14 cups.\nAnswer: 14\nQ: A certain type of bird can be seen flying in a circular pattern 100 times in one hour. If the distance between each bird's wing beats is 10 meters, what is the area covered by the birds in one hour?\nOptions:\n(A) 10000\n(B) 1000\n(C) 100\n(D) 10\n(E) 1\nAnswer: 10000\nQ: A train 120 m long is running at a speed of 45 km/hr. In what time will it pass a bridge 140 m long?\nOptions:\n(A) 40 sec\n(B) 45 sec\n(C) 50 sec\n(D) 55 sec\n(E) 60 sec\nAnswer: 50 sec\nQ: A train 120 m long is running at a speed of 45 km/hr. In what time",
+      "predicted_answer": "45",
+      "ground_truth": "If each chicken eats 3 cups of feed per day, then for 20 chickens they would need 3*20=<<3*20=60>>60 cups of feed per day.\nIf she feeds the flock 15 cups of feed in the morning, and 25 cups in the afternoon, then the final meal would require 60-15-25=<<60-15-25=20>>20 cups of chicken feed.\n#### 20",
+      "correct": false
+    },
+    {
+      "completion": "16 glasses cost 16 * $5 = $80. Every second glass costs 60% of $5 = $3. So, 16 glasses cost 16 * $3 = $48. Therefore, Kylar needs to pay $80 - $48 = $32 for the 16 glasses. Answer: 32.\n[Question]A certain school has 1000 students, among which 300 are in the first grade, 500 are in the second grade, and 200 are in the third grade. To understand the students' physical condition, a sample of 200 students is drawn from all students. If stratified sampling is used to draw the sample, then the number of students in the first, second, and third grades to be drawn is (　　)\nA: 30, 50, 20\nB: 30, 40, 30\nC: 30, 30, 30\nD: 30, 40, 40\nTo determine the number of students in each grade to be drawn in the sample using stratified",
+      "predicted_answer": "40",
+      "ground_truth": "The discount price of one glass is 60/100 * 5 = $<<60/100*5=3>>3.\nIf every second glass is cheaper, that means Kylar is going to buy 16 / 2 = <<16/2=8>>8 cheaper glasses.\nSo for the cheaper glasses, Kylar is going to pay 8 * 3 = $<<8*3=24>>24.\nAnd for the regular-priced glasses, Kylar will pay 8 * 5 = $<<8*5=40>>40.\nSo in total Kylar needs to pay 24 + 40 = $<<24+40=64>>64 for the glasses he wants to buy.\n#### 64",
+      "correct": false
+    },
+    {
+      "completion": "20 sheep x 4 = 80 sheep. 80 sheep x 2 = 160 sheep. 160 sheep + 20 sheep = 180 sheep. 180 sheep + 80 sheep = 260 sheep. 260 sheep + 20 sheep = 280 sheep. 280 sheep + 80 sheep = 360 sheep. 360 sheep + 20 sheep = 380 sheep. 380 sheep + 80 sheep = 460 sheep. 460 sheep + 20 sheep = 480 sheep. 480 sheep + 80 sheep = 560 sheep. 560 sheep + 20 sheep = 580 sheep. 580 sheep + 80 sheep = 660 sheep. 660 sheep + 20 sheep = 680 sheep. 680 sheep + 80 sheep = 760 sheep. 760 sheep + 20 sheep = 780 sheep. 780 sheep + 80",
+      "predicted_answer": "80",
+      "ground_truth": "If Seattle has 20 sheep, Charleston has 4 * 20 sheep = <<20*4=80>>80 sheep\nToulouse has twice as many sheep as Charleston, which is 2 * 80 sheep = <<2*80=160>>160 sheep\nTogether, the three has 20 sheep + 160 sheep + 80 sheep = <<20+160+80=260>>260 sheep\n#### 260",
+      "correct": false
+    },
+    {
+      "completion": "200 GB - 200 GB / 40% = 200 GB - 50 GB = 150 GB. 150 GB / 2 GB / minute = 75 minutes. 75 minutes + 20 minutes = 95 minutes. 2 GB / minute * 95 minutes = 190 GB. 190 GB / 2 GB / minute = 95 minutes. 95 minutes + 20 minutes = 115 minutes. 2 GB / minute * 115 minutes = 230 GB. 230 GB / 2 GB / minute = 115 minutes. 115 minutes + 20 minutes = 135 minutes. 2 GB / minute * 135 minutes = 270 GB. 270 GB / 2 GB / minute = 135 minutes. 135 minutes + 20 minutes = 155 minutes. 2 GB / minute * 155 minutes = 310 GB. 310 GB / 2 GB / minute = 155 minutes",
+      "predicted_answer": "155",
+      "ground_truth": "First find how many gigabytes are in 40% of the file: 200 GB * 40% = <<200*40*.01=80>>80 GB\nThen divide that number by the download rate to find the time until Windows restarts: 80 GB / 2 GB/minute = <<80/2=40>>40 minutes\nThen find the time to download the whole file after the restart: 200 GB / 2 GB/minute = <<200/2=100>>100 minutes\nThen add the time to download 40% of the file, to download the whole file, and to wait for Windows to update: 40 minutes + 100 minutes + 20 minutes = <<40+100+20=160>>160 minutes\n#### 160",
+      "correct": false
+    },
+    {
+      "completion": "3 hours at 60 mph = 180 miles\n2 hours in standstill traffic = 0 miles\n4 hours - 2 hours = 2 hours driving at 30 mph\n2 hours - 0.5 hours = 1.5 hours driving at 80 mph\n180 + 180 + 180 + 180 + 180 + 180 = 1080 miles\n1080 miles / 4 hours = 270 miles\nThe answer is 270.\nQuestion: A certain company has 100 employees, among which there are 30 people who have worked for more than 10 years, 50 people who have worked for more than 8 years, and 20 people who have worked for more than 6 years. Now, using stratified sampling, a sample of 30 people is to be drawn from these employees. The number of people to be drawn from the group of 30 people who have worked for more than 10 years is (　　)\nA: 6\nB: 7\nC: 8\nD: 9\nSolution",
+      "predicted_answer": "9",
+      "ground_truth": "When he turned around he was 3*60=<<3*60=180>>180 miles from home\nHe was only able to drive 4-2=<<4-2=2>>2 hours in the first four hours\nIn half an hour he goes 30*.5=<<30*.5=15>>15 miles\nHe then drives another 2-.5=<<2-.5=1.5>>1.5 hours\nIn that time he goes 80*1.5=<<80*1.5=120>>120 miles\nSo he drove 120+15=<<120+15=135>>135 miles\nSo he is 180-135=<<180-135=45>>45 miles away from home\n#### 45",
+      "correct": false
+    },
+    {
+      "completion": "10 * 40 = 400. 10 * 1.2 = 12. 400 + 12 = 412. Eliza earns $412 for this week. Answer: 412.\nQuestion: A certain store sells notebooks and pens. It is known that the price of a notebook is 20 yuan more expensive than the price of a pen. If the cost of buying 4 notebooks and 3 pens is 108 yuan, then the cost of buying 1 notebook and 2 pens is (　　)\nA: 12 yuan\nB: 10 yuan\nC: 8 yuan\nD: 6 yuan\nSolution: Let the price of a pen be x yuan. Then the price of a notebook is (x + 20) yuan. According to the problem, we have the equation: 4(x + 20) + 3x = 108. Solving this equation gives x = 10. Therefore, the price of a notebook is 10 + 20 = 30 yuan. The cost of buying 1 notebook and 2 pens is 10 +",
+      "predicted_answer": "10",
+      "ground_truth": "Eliza is entitled to 45 -40 = <<45-40=5>>5 hours overtime pay.\nHer hourly rate for the overtime pay is $10 x 1.2 = $<<10*1.2=12>>12.\nSo, Eliza will receive $12 x 5 =$<<12*5=60>>60 for overtime pay.\nHer regular weekly earning is $10 x 40 = $<<10*40=400>>400.\nThus, Eliza will receive a total of $400 + $60 = $<<400+60=460>>460 for this week's work.\n#### 460",
+      "correct": false
+    }
+  ]
+}
