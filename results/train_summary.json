@@ -2,15 +2,15 @@
   "model": "Qwen/Qwen2.5-Math-1.5B",
   "reward": "combined_rule",
   "num_epochs": 1,
-  "batch_size": 10,
+  "batch_size": 24,
   "grad_accum": 1,
-  "effective_batch": 50,
-  "num_generations": 5,
-  "learning_rate": 5e-07,
+  "effective_batch": 72,
+  "num_generations": 3,
+  "learning_rate": 1e-05,
   "beta": 0.0,
-  "use_lora": false,
-  "output_dir": "outputs/grpo_baseline",
-  "total_steps": 3736,
+  "use_lora": true,
+  "output_dir": "outputs/grpo_v2_lora",
+  "total_steps": 125,
   "train_loss": 0.0,
-  "timestamp": "2026-05-05 03:03:38"
+  "timestamp": "2026-05-05 13:17:52"
 }
