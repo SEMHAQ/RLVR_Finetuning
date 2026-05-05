@@ -1,0 +1,70 @@
+{
+  "model": "outputs/grpo_v3_lora/final",
+  "split": "test",
+  "accuracy": 0.7938,
+  "correct": 1047,
+  "total": 1319,
+  "timestamp": "2026-05-05 20:44:51",
+  "examples": [
+    {
+      "completion": "1. First, calculate the total number of eggs laid per day: 16 eggs.\n2. Janet eats 3 eggs for breakfast and bakes 4 eggs for her friends, so the total number of eggs eaten or used is 3 + 4 = 7 eggs.\n3. The number of eggs left for sale is 16 - 7 = 9 eggs.\n4. Since she sells each egg for $2, the total amount she makes every day is 9 eggs * $2/egg = $18.",
+      "predicted_answer": "18",
+      "ground_truth": "Janet sells 16 - 3 - 4 = <<16-3-4=9>>9 duck eggs a day.\nShe makes 9 * 2 = $<<9*2=18>>18 every day at the farmer’s market.\n#### 18",
+      "correct": true
+    },
+    {
+      "completion": "1 bolt of blue fiber takes half the amount of white fiber, so half a bolt of white fiber is needed. Therefore, the total amount of fiber needed is 2 (blue) + 0.5 (white) = 2.5 bolts.",
+      "predicted_answer": "2.5",
+      "ground_truth": "It takes 2/2=<<2/2=1>>1 bolt of white fiber\nSo the total amount of fabric is 2+1=<<2+1=3>>3 bolts of fabric\n#### 3",
+      "correct": false
+    },
+    {
+      "completion": "1. First, calculate the total cost of the house after repairs: $80,000 + $50,000 = $130,000.\n2. The value of the house increased by 150%, which means the increase is 150/100 = 1.5 times the original cost. So, the increase in value is $130,000 * 1.5 = $195,000.\n3. The new value of the house is the original cost plus the increase: $130,000 + $195,000 = $325,000.\n4. The profit is the new value minus the total cost: $325,000 - $130,000 = $195,000.",
+      "predicted_answer": "000",
+      "ground_truth": "The cost of the house and repairs came out to 80,000+50,000=$<<80000+50000=130000>>130,000\nHe increased the value of the house by 80,000*1.5=<<80000*1.5=120000>>120,000\nSo the new value of the house is 120,000+80,000=$<<120000+80000=200000>>200,000\nSo he made a profit of 200,000-130,000=$<<200000-130000=70000>>70,000\n#### 70000",
+      "correct": false
+    },
+    {
+      "completion": " James runs 60 meters each time and he does this 3 times a week.  So, the total distance he runs in a week is 60 meters * 3 = 180 meters.",
+      "predicted_answer": "180",
+      "ground_truth": "He sprints 3*3=<<3*3=9>>9 times\nSo he runs 9*60=<<9*60=540>>540 meters\n#### 540",
+      "correct": false
+    },
+    {
+      "completion": "1) First, calculate the total amount of feed given in the morning and afternoon: 15 cups + 25 cups = 40 cups.\n2) Since each chicken gets 3 cups of feed per meal, for 20 chickens, the total daily feed required is 20 chickens * 3 cups/chicken = 60 cups.\n3) To find out how much feed is needed for the final meal, subtract the total feed given in the morning and afternoon from the total daily feed requirement: 60 cups - 40 cups = 20 cups.",
+      "predicted_answer": "20",
+      "ground_truth": "If each chicken eats 3 cups of feed per day, then for 20 chickens they would need 3*20=<<3*20=60>>60 cups of feed per day.\nIf she feeds the flock 15 cups of feed in the morning, and 25 cups in the afternoon, then the final meal would require 60-15-25=<<60-15-25=20>>20 cups of chicken feed.\n#### 20",
+      "correct": true
+    },
+    {
+      "completion": "1. The cost of the first glass is $5.\n2. The cost of every second glass is 60% of $5, which is $5 * 0.6 = $3.\n3. Kylar wants to buy 16 glasses, so he will buy 8 glasses at the regular price and 8 glasses at the discounted price.\n4. The total cost is 8 * $5 (for the first glasses) + 8 * $3 (for the second glasses) = $40 + $24 = $64.",
+      "predicted_answer": "64",
+      "ground_truth": "The discount price of one glass is 60/100 * 5 = $<<60/100*5=3>>3.\nIf every second glass is cheaper, that means Kylar is going to buy 16 / 2 = <<16/2=8>>8 cheaper glasses.\nSo for the cheaper glasses, Kylar is going to pay 8 * 3 = $<<8*3=24>>24.\nAnd for the regular-priced glasses, Kylar will pay 8 * 5 = $<<8*5=40>>40.\nSo in total Kylar needs to pay 24 + 40 = $<<24+40=64>>64 for the glasses he wants to buy.\n#### 64",
+      "correct": true
+    },
+    {
+      "completion": "1. Start with the number of sheep in Seattle, which is given as 20.\n2. Since Charleston has 4 times as many sheep as Seattle, Charleston has \\(4 \\times 20 = 80\\) sheep.\n3. Toulouse has twice as many sheep as Charleston, so Toulouse has \\(2 \\times 80 = 160\\) sheep.\n4. To find the total number of sheep, add the number of sheep in each city: \\(20 + 80 + 160 = 260\\).",
+      "predicted_answer": "260",
+      "ground_truth": "If Seattle has 20 sheep, Charleston has 4 * 20 sheep = <<20*4=80>>80 sheep\nToulouse has twice as many sheep as Charleston, which is 2 * 80 sheep = <<2*80=160>>160 sheep\nTogether, the three has 20 sheep + 160 sheep + 80 sheep = <<20+160+80=260>>260 sheep\n#### 260",
+      "correct": true
+    },
+    {
+      "completion": "1. Calculate the total time without the restart: 200 GB / 2 GB/minute = 100 minutes.\n2. Determine the point at which the restart occurs: 200 GB * 40% = 80 GB.\n3. Calculate the time to download the first 80 GB: 80 GB / 2 GB/minute = 40 minutes.\n4. Add the restart time: 40 minutes + 20 minutes = 60 minutes.\n5. Calculate the time to download the remaining 120 GB: 120 GB / 2 GB/minute = 60 minutes.\n6. Add the time for the second restart: 60 minutes + 60 minutes = 120 minutes.",
+      "predicted_answer": "120",
+      "ground_truth": "First find how many gigabytes are in 40% of the file: 200 GB * 40% = <<200*40*.01=80>>80 GB\nThen divide that number by the download rate to find the time until Windows restarts: 80 GB / 2 GB/minute = <<80/2=40>>40 minutes\nThen find the time to download the whole file after the restart: 200 GB / 2 GB/minute = <<200/2=100>>100 minutes\nThen add the time to download 40% of the file, to download the whole file, and to wait for Windows to update: 40 minutes + 100 minutes + 20 minutes = <<40+100+20=160>>160 minutes\n#### 160",
+      "correct": false
+    },
+    {
+      "completion": "1. Calculate the distance John traveled in the first 3 hours: \\(60 \\text{ mph} \\times 3 \\text{ hours} = 180 \\text{ miles}\\).\n2. Calculate the distance John traveled in the next half hour at 30 mph: \\(30 \\text{ mph} \\times 0.5 \\text{ hours} = 15 \\text{ miles}\\).\n3. Calculate the distance John traveled in the remaining time of the 4 hours at 80 mph. Since he spent 2 hours in standstill traffic, he had 1.5 hours left to travel: \\(80 \\text{ mph} \\times 1.5 \\text{ hours} = 120 \\text{ miles}\\).\n4. Add up all the distances: \\(180 \\text{ miles} + 15 \\text{ miles} + 120 \\text{ miles} = 315 \\text{ miles}\\).\n5. Since John was driving away from home for the first 3 hours, the total distance from home is the sum of the distances traveled in each segment, which is \\(315 \\text{ miles}\\).",
+      "predicted_answer": "315",
+      "ground_truth": "When he turned around he was 3*60=<<3*60=180>>180 miles from home\nHe was only able to drive 4-2=<<4-2=2>>2 hours in the first four hours\nIn half an hour he goes 30*.5=<<30*.5=15>>15 miles\nHe then drives another 2-.5=<<2-.5=1.5>>1.5 hours\nIn that time he goes 80*1.5=<<80*1.5=120>>120 miles\nSo he drove 120+15=<<120+15=135>>135 miles\nSo he is 180-135=<<180-135=45>>45 miles away from home\n#### 45",
+      "correct": false
+    },
+    {
+      "completion": "1. First, calculate the earnings for the first 40 hours at the regular rate: 40 hours * $10/hour = $400.\n2. Next, calculate the overtime rate: 1.2 * $10/hour = $12/hour.\n3. Then, calculate the earnings for the 5 hours of overtime: 5 hours * $12/hour = $60.\n4. Finally, add the earnings from the regular hours and the overtime hours: $400 + $60 = $460.",
+      "predicted_answer": "460",
+      "ground_truth": "Eliza is entitled to 45 -40 = <<45-40=5>>5 hours overtime pay.\nHer hourly rate for the overtime pay is $10 x 1.2 = $<<10*1.2=12>>12.\nSo, Eliza will receive $12 x 5 =$<<12*5=60>>60 for overtime pay.\nHer regular weekly earning is $10 x 40 = $<<10*40=400>>400.\nThus, Eliza will receive a total of $400 + $60 = $<<400+60=460>>460 for this week's work.\n#### 460",
+      "correct": true
+    }
+  ]
+}
