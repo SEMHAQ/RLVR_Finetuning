@@ -107,7 +107,8 @@ def ai_feedback_reward(completions, prompt=None, **kwargs):
 def fused_reward(completions, answer=None, fusion_method="adaptive", **kwargs):
     """Fused multi-source reward (MSF-GRPO).
 
-    Combines rule, AI, and scalar feedback with adaptive weighting.
+    Combines rule, AI, and scalar feedback. Rule reward is the dominant
+    signal (base), with AI/scalar as auxiliary bonuses.
 
     Args:
         completions: list of model completion strings
@@ -122,13 +123,19 @@ def fused_reward(completions, answer=None, fusion_method="adaptive", **kwargs):
     from src.feedback.scalar import scalar_score
     from src.feedback.fusion import AdaptiveFusion
 
-    sources = {
-        "rule": (lambda c, **_: rule_score(c, answer=answer), 1.0),
+    # Rule is the base reward (dominant signal)
+    rule_r = rule_score(completions, answer=answer)
+
+    # AI + Scalar are auxiliary signals
+    aux_sources = {
         "ai": (ai_score, 0.8),
         "scalar": (scalar_score, 0.5),
     }
 
-    fusion = AdaptiveFusion(sources, method=fusion_method)
-    fused, _, _ = fusion.compute_rewards(completions, **kwargs)
+    fusion = AdaptiveFusion(aux_sources, method=fusion_method)
+    aux_fused, _, _ = fusion.compute_rewards(completions, **kwargs)
+
+    # Final: rule (base) + 0.2 * aux (small bonus)
+    fused = [r + 0.2 * a for r, a in zip(rule_r, aux_fused)]
 
     return fused
