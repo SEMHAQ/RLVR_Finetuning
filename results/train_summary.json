@@ -10,8 +10,8 @@
   "learning_rate": 2e-05,
   "beta": 0.0,
   "use_lora": true,
-  "output_dir": "outputs/grpo_msf_test",
-  "total_steps": 25,
+  "output_dir": "outputs/grpo_msf",
+  "total_steps": 934,
   "train_loss": 0.0,
-  "timestamp": "2026-05-05 21:20:21"
+  "timestamp": "2026-05-06 04:41:09"
 }
