@@ -9,7 +9,6 @@ foreach ($lr in @("1e-6", "5e-6", "1e-5", "2e-5")) {
     Write-Host ">>> 训练 lr=$lr"
     python scripts/train_grpo.py `
         --model Qwen/Qwen2.5-Math-1.5B `
-        --dataset gsm8k `
         --reward rule `
         --lr $lr `
         --batch_size 6 `

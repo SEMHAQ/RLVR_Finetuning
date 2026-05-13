@@ -57,6 +57,8 @@ def parse_args():
                         help="Fusion method for 'fused' reward")
     parser.add_argument("--wandb_project", type=str, default="unifb",
                         help="WandB project name (set to 'none' to disable)")
+    parser.add_argument("--tag", type=str, default=None,
+                        help="Tag for output directory (default: auto from reward type)")
     return parser.parse_args()
 
 
@@ -81,6 +83,13 @@ def get_reward_fn(reward_type, fusion_method="adaptive"):
 
 def main():
     args = parse_args()
+
+    # ---- Output directory from tag ----
+    if args.tag:
+        args.output_dir = f"outputs/grpo_{args.tag}"
+    elif args.output_dir == "outputs/grpo_baseline":
+        # Auto-generate if not overridden
+        args.output_dir = f"outputs/grpo_{args.reward}"
 
     # ---- WandB setup ----
     if args.wandb_project.lower() == "none":
@@ -193,9 +202,10 @@ def main():
         "train_loss": round(train_result.training_loss, 4) if train_result and hasattr(train_result, "training_loss") else None,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
-    with open("results/train_summary.json", "w", encoding="utf-8") as f:
+    summary_name = f"train_{args.tag}.json" if args.tag else "train_summary.json"
+    with open(f"results/{summary_name}", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
-    print(f"Training summary saved to: results/train_summary.json")
+    print(f"Training summary saved to: results/{summary_name}")
     print("Training complete!")
 
 

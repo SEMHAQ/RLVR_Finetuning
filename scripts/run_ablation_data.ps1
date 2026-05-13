@@ -9,7 +9,6 @@ foreach ($size in @(1000, 3000, 5000, 7500)) {
     Write-Host ">>> 训练 data_size=$size"
     python scripts/train_grpo.py `
         --model Qwen/Qwen2.5-Math-1.5B `
-        --dataset gsm8k `
         --reward rule `
         --lr 2e-5 `
         --batch_size 6 `

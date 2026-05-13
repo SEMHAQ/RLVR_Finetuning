@@ -10,7 +10,6 @@ foreach ($ngen in @(2, 4, 8)) {
     $bs = $ngen * 2
     python scripts/train_grpo.py `
         --model Qwen/Qwen2.5-Math-1.5B `
-        --dataset gsm8k `
         --reward rule `
         --lr 2e-5 `
         --batch_size $bs `
