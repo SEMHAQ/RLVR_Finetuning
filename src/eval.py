@@ -153,15 +153,13 @@ def evaluate_math500(model_path, max_new_tokens=512, batch_size=32, use_chat=Non
 
         prompts = []
         gt_answers = []
-        for item in batch:
-            p = item["prompt"]
-            a = item["answer"]
-            if use_chat and isinstance(p, list):
+        for q, a in zip(batch["prompt"], batch["answer"]):
+            if use_chat and isinstance(q, list):
                 prompt_text = tokenizer.apply_chat_template(
-                    p, tokenize=False, add_generation_prompt=True
+                    q, tokenize=False, add_generation_prompt=True
                 )
             else:
-                prompt_text = p
+                prompt_text = q
             prompts.append(prompt_text)
             gt_answers.append(a)
 
