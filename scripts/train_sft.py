@@ -2,6 +2,7 @@
 SFT (Supervised Fine-Tuning) Baseline
 ======================================
 用于与 GRPO 对比的监督微调 baseline。
+使用 transformers.Trainer 兼容旧版 TRL。
 
 Usage:
     python scripts/train_sft.py --model Qwen/Qwen2.5-Math-1.5B --use_lora
@@ -15,9 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTTrainer
-from peft import LoraConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer
+from peft import LoraConfig, get_peft_model
 
 
 def parse_args():
@@ -26,20 +26,11 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--max_samples", type=int, default=None)
-    parser.add_argument("--max_seq_length", type=int, default=512)
+    parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--use_lora", action="store_true", default=False)
     parser.add_argument("--tag", type=str, default="sft_baseline")
     return parser.parse_args()
-
-
-def format_gsm8k(example):
-    """Format GSM8K for SFT training."""
-    system = "You are a math tutor. Solve the problem step by step, then put your final numerical answer after #### ."
-    prompt = f"Question: {example['question']}\nSolution: "
-    completion = example['answer']
-    text = f"<|system|>\n{system}\n<|user|>\n{prompt}\n<|assistant|>\n{completion}"
-    return {"text": text}
 
 
 def main():
@@ -59,31 +50,48 @@ def main():
         trust_remote_code=True,
     )
 
-    # LoRA config
-    peft_config = None
+    # LoRA
     if args.use_lora:
-        peft_config = LoraConfig(
+        print("Using LoRA")
+        lora_config = LoraConfig(
             r=16,
             lora_alpha=32,
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
             lora_dropout=0.05,
             task_type="CAUSAL_LM",
         )
+        model = get_peft_model(model, lora_config)
 
     # Load dataset
     print("Loading GSM8K training data...")
     ds = load_dataset("openai/gsm8k", "main", split="train")
-    ds = ds.map(format_gsm8k, remove_columns=ds.column_names)
 
     if args.max_samples:
         ds = ds.select(range(min(args.max_samples, len(ds))))
+
+    # Tokenize
+    system = "You are a math tutor. Solve the problem step by step, then put your final numerical answer after #### ."
+
+    def tokenize(example):
+        prompt = f"Question: {example['question']}\nSolution: "
+        full_text = f"<|system|>\n{system}\n<|user|>\n{prompt}\n<|assistant|>\n{example['answer']}"
+        tokenized = tokenizer(
+            full_text,
+            truncation=True,
+            max_length=args.max_length,
+            padding="max_length",
+        )
+        tokenized["labels"] = tokenized["input_ids"].copy()
+        return tokenized
+
+    ds = ds.map(tokenize, remove_columns=ds.column_names)
+    print(f"Training examples: {len(ds)}")
 
     # Output directory
     output_dir = f"outputs/{args.tag}"
     os.makedirs(output_dir, exist_ok=True)
 
     # Training arguments
-    from transformers import TrainingArguments
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=args.epochs,
@@ -97,16 +105,14 @@ def main():
         save_strategy="epoch",
         report_to="wandb",
         run_name=args.tag,
+        remove_unused_columns=False,
     )
 
     # Trainer
-    trainer = SFTTrainer(
+    trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=ds,
-        processing_class=tokenizer,
-        peft_config=peft_config,
-        dataset_text_field="text",
     )
 
     print(f"Starting SFT training: {args.tag}")
