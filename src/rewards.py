@@ -135,7 +135,7 @@ def fused_reward(completions, answer=None, fusion_method="adaptive", **kwargs):
     fusion = AdaptiveFusion(aux_sources, method=fusion_method)
     aux_fused, _, _ = fusion.compute_rewards(completions, **kwargs)
 
-    # Final: rule (base) + aux bonus only for correct answers
-    fused = [r + 0.2 * a if r > 0 else 0.0 for r, a in zip(rule_r, aux_fused)]
+    # Final: rule (base) + small aux bonus only for correct answers
+    fused = [r + 0.05 * a if r > 0 else 0.0 for r, a in zip(rule_r, aux_fused)]
 
     return fused
