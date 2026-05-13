@@ -15,15 +15,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
-from trl import SFTTrainer
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import SFTConfig, SFTTrainer
 from peft import LoraConfig
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="SFT baseline training")
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-Math-1.5B")
-    parser.add_argument("--dataset", type=str, default="gsm8k")
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--max_samples", type=int, default=None)
@@ -39,13 +38,8 @@ def format_gsm8k(example):
     system = "You are a math tutor. Solve the problem step by step, then put your final numerical answer after #### ."
     prompt = f"Question: {example['question']}\nSolution: "
     completion = example['answer']
-    return {
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt},
-            {"role": "assistant", "content": completion},
-        ]
-    }
+    text = f"<|system|>\n{system}\n<|user|>\n{prompt}\n<|assistant|>\n{completion}"
+    return {"text": text}
 
 
 def main():
@@ -77,7 +71,7 @@ def main():
         )
 
     # Load dataset
-    print(f"Loading dataset: {args.dataset}")
+    print("Loading GSM8K training data...")
     ds = load_dataset("openai/gsm8k", "main", split="train")
     ds = ds.map(format_gsm8k, remove_columns=ds.column_names)
 
@@ -88,8 +82,8 @@ def main():
     output_dir = f"outputs/{args.tag}"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Training arguments
-    training_args = TrainingArguments(
+    # Training arguments via SFTConfig
+    training_args = SFTConfig(
         output_dir=output_dir,
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
@@ -102,6 +96,8 @@ def main():
         save_strategy="epoch",
         report_to="wandb",
         run_name=args.tag,
+        max_seq_length=args.max_seq_length,
+        dataset_text_field="text",
     )
 
     # Trainer
@@ -110,7 +106,6 @@ def main():
         args=training_args,
         train_dataset=ds,
         processing_class=tokenizer,
-        max_seq_length=args.max_seq_length,
         peft_config=peft_config,
     )
 
