@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTConfig, SFTTrainer
+from trl import SFTTrainer
 from peft import LoraConfig
 
 
@@ -82,8 +82,9 @@ def main():
     output_dir = f"outputs/{args.tag}"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Training arguments via SFTConfig
-    training_args = SFTConfig(
+    # Training arguments
+    from transformers import TrainingArguments
+    training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
@@ -96,8 +97,6 @@ def main():
         save_strategy="epoch",
         report_to="wandb",
         run_name=args.tag,
-        max_seq_length=args.max_seq_length,
-        dataset_text_field="text",
     )
 
     # Trainer
@@ -107,6 +106,7 @@ def main():
         train_dataset=ds,
         processing_class=tokenizer,
         peft_config=peft_config,
+        dataset_text_field="text",
     )
 
     print(f"Starting SFT training: {args.tag}")
