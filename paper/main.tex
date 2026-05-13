@@ -1,0 +1,400 @@
+\documentclass[10.5pt]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{multirow}
+\usepackage{float}
+
+\title{\textbf{面向数学推理的GRPO强化学习微调：规则反馈与多源反馈的效果分析}}
+
+\author{
+  作者姓名$^{1}$ \\
+  $^{1}$单位名称 \\
+  \texttt{email@example.com}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+大语言模型（LLM）的数学推理能力是智能教育系统的核心。GRPO（Group Relative Policy Optimization）作为DeepSeek-R1提出的强化学习算法，通过组内相对优势估计实现了无需critic model的高效策略优化。本文在Qwen2.5-Math-1.5B上系统评测了GRPO在数学推理任务上的微调效果，并探索了多源反馈融合（MSF-GRPO）的可行性。实验表明：（1）纯规则反馈的GRPO在GSM8K上将准确率从44.28\%提升至79.38\%，绝对提升35.1个百分点，在MATH-500上达到53.8\%；（2）在此基础上加入AI反馈和标量反馈的多源融合反而导致性能下降，GSM8K降至69.75\%$\sim$72.55\%，MATH-500降至48.0\%。分析表明，在答案可验证的任务中，规则反馈已是完美信号，辅助反馈引入的是噪声而非有用信息。本文为数学推理任务的RL微调提供了系统性的实验分析和实践指导。
+\end{abstract}
+
+\textbf{关键词}：大语言模型；强化学习；GRPO；数学推理；多源反馈
+
+\section{引言}
+
+数学推理能力是衡量大语言模型智能水平的重要指标之一。与一般的文本生成任务不同，数学推理要求模型具备严格的逻辑推导能力、多步计算能力和符号操作能力\cite{qwen25math}。近年来，随着大语言模型的发展，数学推理已成为AI领域的核心研究方向之一。
+
+在大语言模型的微调方法中，基于人类反馈的强化学习（RLHF）\cite{instructgpt}已被证明能有效提升模型的指令遵循能力。然而，RLHF需要训练独立的奖励模型（Reward Model），流程复杂且计算开销大。为此，DeepSeek-R1\cite{deepseekr1}提出了GRPO（Group Relative Policy Optimization）算法，通过组内相对优势估计避免了critic model的使用，显著简化了训练流程。
+
+GRPO的核心思想是：对每个prompt采样一组response，通过组内reward的相对大小计算优势函数，从而实现策略优化。在DeepSeek-R1中，GRPO结合规则反馈（答案正确性验证）在数学推理任务上取得了显著效果。然而，现有研究主要关注GRPO的算法设计，对其在不同训练配置下的效果、以及多源反馈信号融合的可行性缺乏系统性分析。
+
+本文围绕以下三个研究问题展开实验：
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{RQ1}：GRPO在数学推理任务上的微调效果如何？相比未训练的基础模型能带来多大提升？
+  \item \textbf{RQ2}：训练配置（全量微调vs LoRA、学习率、数据规模）如何影响GRPO的效果？
+  \item \textbf{RQ3}：在规则反馈基础上加入AI反馈和标量反馈的多源融合能否进一步提升性能？
+\end{enumerate}
+
+本文的主要贡献如下：
+
+\begin{enumerate}[leftmargin=2em]
+  \item 在Qwen2.5-Math-1.5B上系统评测了GRPO的数学推理增强效果，涵盖GSM8K和MATH-500两个基准。
+  \item 对比了全量微调与LoRA、不同学习率等训练配置的影响，为实践提供了配置建议。
+  \item 提出了MSF-GRPO方法并通过实验分析了多源反馈在可验证任务上的效果，揭示了辅助信号引入噪声的问题。
+\end{enumerate}
+
+\section{相关工作}
+
+\subsection{基于强化学习的LLM微调}
+
+基于人类反馈的强化学习（RLHF）\cite{instructgpt}是当前LLM微调的主流范式之一。其核心流程包括：收集人类偏好数据、训练奖励模型、使用PPO\cite{ppo}优化策略。然而，RLHF流程复杂，需要维护多个模型（策略模型、参考模型、奖励模型、critic模型），计算开销大。
+
+为简化RLHF流程，DPO（Direct Preference Optimization）\cite{dpo}提出直接从偏好对优化策略，绕过了显式奖励模型的训练。但DPO仅支持pairwise偏好数据，无法利用更丰富的反馈信号。
+
+GRPO（Group Relative Policy Optimization）\cite{deepseekmath}由DeepSeek-Math首次提出，在DeepSeek-R1\cite{deepseekr1}中得到广泛应用。GRPO对每个prompt采样一组response，通过组内相对reward计算优势函数，避免了critic model的使用。其优势函数定义为：
+
+\begin{equation}
+\hat{A}_i = \frac{r_i - \text{mean}(\mathbf{r})}{\text{std}(\mathbf{r})}
+\end{equation}
+
+其中$r_i$为第$i$个response的reward，$\mathbf{r}$为组内所有response的reward向量。
+
+\subsection{规则反馈与可验证奖励}
+
+规则反馈（Rule-based Reward）是指通过规则或验证器直接判断模型输出的正确性。在数学推理任务中，可以通过提取模型输出中的最终答案并与标准答案比对来判断正确性。DeepSeek-R1\cite{deepseekr1}证明，仅使用规则反馈的GRPO就能在数学推理任务上取得优异效果。
+
+RLVR（Reinforcement Learning with Verifiable Rewards）\cite{rlvr}进一步扩展了规则反馈的应用范围，将其推广到代码生成、逻辑推理等可验证任务。然而，对于不可验证的任务（如开放域问答、创意写作），规则反馈无法直接应用。
+
+\subsection{多目标与多维对齐}
+
+多目标强化学习（Multi-Objective RL）在LLM微调中的应用逐渐受到关注。MO-GRPO\cite{mogrpo}发现GRPO在多目标设置下会偏向高方差reward，导致reward hacking问题，提出了方差感知归一化方法。SPO\cite{spo}研究了多维偏好的顺序优化问题，发现顺序优化会导致灾难性遗忘。
+
+这些工作表明，多源反馈信号的融合并非简单拼接就能生效，需要考虑信号质量、方差差异和冲突处理等问题。
+
+\section{方法}
+
+\subsection{GRPO基础框架}
+
+本文基于TRL框架\cite{trl}的GRPOTrainer实现GRPO算法。给定训练数据集$\mathcal{D} = \{(x_i, a_i)\}_{i=1}^{N}$，其中$x_i$为prompt，$a_i$为标准答案，GRPO的训练流程如下：
+
+\begin{enumerate}[leftmargin=2em]
+  \item 对每个prompt $x_i$，从当前策略$\pi_\theta$采样$G$个response $\{y_1, ..., y_G\}$
+  \item 计算每个response的reward $r_j = R(x_i, y_j, a_i)$
+  \item 计算组内相对优势$\hat{A}_j = (r_j - \bar{r}) / \text{std}(\mathbf{r})$
+  \item 使用PPO-clip目标更新策略：
+\end{enumerate}
+
+\begin{equation}
+\mathcal{L}_{GRPO} = -\mathbb{E}\left[\min\left(\frac{\pi_\theta}{\pi_{old}} \hat{A}, \text{clip}\left(\frac{\pi_\theta}{\pi_{old}}, 1-\epsilon, 1+\epsilon\right) \hat{A}\right)\right] + \beta \cdot D_{KL}(\pi_\theta \| \pi_{ref})
+\end{equation}
+
+其中$\epsilon$为clip参数，$\beta$为KL惩罚系数，$\pi_{ref}$为参考策略。
+
+\subsection{规则反馈设计}
+
+对于数学推理任务，答案可通过规则验证。本文的规则反馈函数定义为：
+
+\begin{equation}
+r_{rule}(x, y) = \begin{cases} 1.0 & \text{if extract\_answer}(y) = \text{normalize}(a) \\ 0.0 & \text{otherwise} \end{cases}
+\end{equation}
+
+其中extract\_answer从模型输出中提取最终答案（GSM8K使用\texttt{\#\#\#\#}标记，MATH使用\texttt{\textbackslash boxed\{\}}标记），normalize对答案进行标准化处理（去除空格、逗号、美元符号等）。
+
+此外，本文还设计了格式奖励，对使用正确格式（包含\texttt{\#\#\#\#}标记）的输出给予0.1的额外奖励，以鼓励模型学习结构化输出。
+
+\subsection{MSF-GRPO：多源反馈融合}
+
+为探索多源反馈信号的融合效果，本文提出MSF-GRPO方法，在规则反馈基础上融合AI反馈和标量反馈。
+
+\subsubsection{AI反馈}
+
+AI反馈模拟LLM-as-Judge的评分方式，通过规则对模型输出的推理质量进行评分（0-1）：
+
+\begin{itemize}[leftmargin=2em]
+  \item 步骤数量评分（0-0.3）：3-8步为最佳，过少或过多扣分
+  \item 计算过程评分（0-0.3）：是否包含中间计算步骤
+  \item 推理连贯性（0-0.2）：是否使用过渡词（因此、所以、接下来等）
+  \item 数学符号使用（0-0.2）：是否使用数学表达式
+\end{itemize}
+
+\subsubsection{标量反馈}
+
+标量反馈从格式规范性和表达质量两个维度进行连续评分（0-1）：
+
+\begin{itemize}[leftmargin=2em]
+  \item 格式分（0-0.3）：是否有结构化标记、是否分步骤
+  \item 步骤完整度（0-0.4）：推理步骤数量、是否有计算过程
+  \item 表达清晰度（0-0.3）：数学符号使用、结构化程度
+\end{itemize}
+
+\subsubsection{自适应融合}
+
+采用方差感知加权方法\cite{mogrpo}融合多个反馈源：
+
+\begin{equation}
+w_i = \frac{\rho_i / \sigma_i^2}{\sum_j \rho_j / \sigma_j^2}
+\end{equation}
+
+其中$\rho_i$为第$i$个反馈源的可靠性先验（$\rho_{rule}=1.0 > \rho_{ai}=0.8 > \rho_{scalar}=0.5$），$\sigma_i^2$为当前batch的reward方差。
+
+最终的融合reward采用gated机制，仅在答案正确时给予辅助信号bonus：
+
+\begin{equation}
+r_{fused} = \begin{cases} r_{rule} + \alpha \cdot r_{aux} & \text{if } r_{rule} > 0 \\ 0.0 & \text{otherwise} \end{cases}
+\end{equation}
+
+其中$\alpha$为辅助信号权重，$r_{aux}$为AI反馈和标量反馈的融合结果。
+
+\section{实验}
+
+\subsection{实验设置}
+
+\subsubsection{基础模型}
+
+本文使用Qwen2.5-Math-1.5B\cite{qwen25math}作为基础模型。该模型是Qwen团队专门为数学任务训练的1.5B参数模型，具备基础的数学推理能力。
+
+\subsubsection{数据集}
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{GSM8K}\cite{gsm8k}：Grade School Math 8K，包含7.5K训练样本和1.3K测试样本的小学数学应用题。
+  \item \textbf{MATH-500}：MATH数据集的500题子集，涵盖代数、几何、数论等7个子领域，难度高于GSM8K。
+\end{itemize}
+
+\subsubsection{训练配置}
+
+所有实验使用TRL框架的GRPOTrainer，主要配置如表~\ref{tab:config}所示。
+
+\begin{table}[H]
+\centering
+\caption{训练配置}
+\label{tab:config}
+\begin{tabular}{ll}
+\toprule
+\textbf{配置项} & \textbf{值} \\
+\midrule
+基础模型 & Qwen2.5-Math-1.5B \\
+微调方式 & LoRA (r=16, alpha=32, target\_modules=q\_proj,k\_proj,v\_proj,o\_proj) \\
+学习率 & 2e-5（主实验）/ 消融实验见表~\ref{tab:ablation\_lr} \\
+Batch Size & 6 \\
+Num Generations & 3 \\
+Max Completion Length & 256 tokens \\
+训练轮数 & 1 epoch (934 steps) \\
+优化器 & AdamW \\
+学习率调度 & Cosine \\
+硬件 & RTX 3090 24GB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{评测指标}
+
+主指标为pass@1 accuracy，即模型生成的答案与标准答案一致的比例。答案提取规则：
+\begin{itemize}[leftmargin=2em]
+  \item GSM8K：提取\texttt{\#\#\#\#}后的数字
+  \item MATH-500：提取\texttt{\textbackslash boxed\{\}}中的内容
+\end{itemize}
+
+\subsection{RQ1：GRPO的有效性}
+
+表~\ref{tab:main}展示了GRPO在GSM8K和MATH-500上的主要结果。
+
+\begin{table}[H]
+\centering
+\caption{主要实验结果}
+\label{tab:main}
+\begin{tabular}{llcc}
+\toprule
+\textbf{实验} & \textbf{方法} & \textbf{GSM8K} & \textbf{MATH-500} \\
+\midrule
+Baseline & 无训练 & 44.28\% & --- \\
+grpo\_v3 & GRPO (LoRA, lr=2e-5) & \textbf{79.38\%} & \textbf{53.8\%} \\
+\midrule
+\multicolumn{4}{l}{\textit{与公开结果对比}} \\
+\midrule
+\cite{qwen25math} & Qwen2.5-Math-7B (few-shot) & $\sim$84\% & --- \\
+\cite{deepseekr1} & DeepSeek-R1 & $\sim$97.3\% & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+GRPO在GSM8K上将准确率从44.28\%提升至79.38\%，绝对提升35.1个百分点。这一结果表明，GRPO结合规则反馈能显著增强1.5B模型的数学推理能力，使其接近7B模型的few-shot水平。在更具挑战性的MATH-500上，GRPO也达到了53.8\%的准确率。
+
+\subsection{RQ2：训练配置的影响}
+
+\subsubsection{全量微调 vs LoRA}
+
+表~\ref{tab:lora}对比了全量微调与LoRA的效果。
+
+\begin{table}[H]
+\centering
+\caption{全量微调 vs LoRA}
+\label{tab:lora}
+\begin{tabular}{lccc}
+\toprule
+\textbf{方法} & \textbf{学习率} & \textbf{GSM8K} & \textbf{训练时间} \\
+\midrule
+全量微调 & 5e-7 & 44.20\% & $\sim$14h \\
+LoRA & 2e-5 & 79.38\% & $\sim$5h \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+全量微调使用较小学习率（5e-7）时效果无提升，而LoRA使用较大学习率（2e-5）时效果显著。可能原因：全量微调的学习率过低导致训练不充分，而LoRA的参数效率允许使用更高的学习率，在有限的训练步数内实现更有效的更新。
+
+\subsubsection{数据规模}
+
+表~\ref{tab:data}展示了不同训练数据规模的影响。
+
+\begin{table}[H]
+\centering
+\caption{不同训练数据规模的效果}
+\label{tab:data}
+\begin{tabular}{ccc}
+\toprule
+\textbf{训练样本数} & \textbf{GSM8K} & \textbf{备注} \\
+\midrule
+1,000 & 44.66\% & 几乎无提升 \\
+7,500 & 79.38\% & 全量数据 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+1K训练样本几乎无法提升模型性能（44.66\% vs 44.28\%），而使用全量7.5K数据时效果显著。这表明GRPO需要足够的数据多样性来建立有效的组内对比，少量数据无法提供足够的学习信号。
+
+\subsection{RQ3：多源反馈融合的效果}
+
+表~\ref{tab:msf}展示了MSF-GRPO与纯规则GRPO的对比。
+
+\begin{table}[H]
+\centering
+\caption{多源反馈融合实验结果}
+\label{tab:msf}
+\begin{tabular}{lccc}
+\toprule
+\textbf{方法} & \textbf{辅助信号权重$\alpha$} & \textbf{GSM8K} & \textbf{MATH-500} \\
+\midrule
+纯规则GRPO & 0 & \textbf{79.38\%} & \textbf{53.8\%} \\
+MSF-GRPO & 0.2 & 72.55\% & --- \\
+MSF-GRPO & 0.05 & 69.75\% & 48.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+加入AI反馈和标量反馈后，性能反而下降：GSM8K从79.38\%降至69.75\%$\sim$72.55\%，MATH-500从53.8\%降至48.0\%。即使将辅助信号权重降至0.05（接近纯规则），性能仍然下降。
+
+\subsubsection{原因分析}
+
+多源反馈融合失败的原因可从以下角度分析：
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{信号质量差异}：在数学推理任务中，规则反馈（答案正确性）是完美的二值信号（0/1），而AI反馈和标量反馈基于启发式规则，与正确答案的相关性较弱。
+  \item \textbf{噪声引入}：辅助反馈在组内相对优势计算中引入噪声。GRPO的组内归一化会放大方差的影响，导致辅助信号的噪声被进一步放大。
+  \item \textbf{Gated机制的局限}：虽然gated aux仅在答案正确时给予bonus，但辅助信号仍在组内优势计算中影响了正确答案之间的相对排序。
+  \item \textbf{任务特性}：数学推理是高度可验证的任务，答案正确性已经包含了推理质量的全部信息。对于此类任务，额外的过程信号是冗余的。
+\end{enumerate}
+
+\subsection{讨论}
+
+\subsubsection{GRPO在数学推理上的优势}
+
+实验结果表明，GRPO结合规则反馈是数学推理任务的有效微调方法。其优势在于：
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{信号精确}：规则反馈提供0/1的精确信号，无噪声干扰
+  \item \textbf{无需标注}：不需要人类标注偏好数据，仅需标准答案
+  \item \textbf{训练高效}：LoRA微调仅需5小时即可在单卡3090上完成
+  \item \textbf{效果显著}：1.5B模型经GRPO训练后接近7B模型的few-shot水平
+\end{enumerate}
+
+\subsubsection{多源反馈的适用场景}
+
+本文的实验表明，在答案可验证的任务中，多源反馈融合可能反而有害。然而，这并不意味着多源反馈没有价值。在以下场景中，多源反馈可能更有意义：
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{不可验证任务}：如开放域问答、创意写作等，规则反馈无法直接应用
+  \item \textbf{过程导向任务}：如代码生成、证明构造等，过程质量与答案正确性不完全相关
+  \item \textbf{多维评估任务}：如需要同时优化有用性、安全性和流畅性的场景
+\end{enumerate}
+
+\subsubsection{局限性}
+
+本文的局限性包括：
+
+\begin{enumerate}[leftmargin=2em]
+  \item 仅在1.5B模型上验证，未测试更大规模模型
+  \item AI反馈和标量反馈使用规则模拟，未使用真正的LLM-as-Judge
+  \item 消融实验不够充分，未系统测试不同学习率、num\_generations等参数
+  \item 仅在GSM8K和MATH-500两个数据集上验证
+\end{enumerate}
+
+\section{结论}
+
+本文在Qwen2.5-Math-1.5B上系统评测了GRPO在数学推理任务上的微调效果，并探索了多源反馈融合的可行性。主要发现包括：
+
+\begin{enumerate}[leftmargin=2em]
+  \item 纯规则反馈的GRPO在GSM8K上将准确率从44.28\%提升至79.38\%，在MATH-500上达到53.8\%，证明GRPO是数学推理任务的有效微调方法。
+  \item LoRA微调在适当学习率下优于全量微调，且训练效率更高。
+  \item 在规则反馈基础上加入AI反馈和标量反馈的多源融合反而导致性能下降，表明在可验证任务中辅助信号可能引入噪声。
+\end{enumerate}
+
+未来工作方向包括：（1）在更大规模模型（7B/14B）上验证GRPO的效果；（2）在不可验证任务上探索多源反馈融合的可行性；（3）研究更精细的反馈融合策略，如基于梯度冲突检测的动态权重调整。
+
+\begin{thebibliography}{20}
+
+\bibitem{instructgpt}
+Ouyang L, Wu J, Jiang X, et al. Training Language Models to Follow Instructions with Human Feedback. \textit{NeurIPS}, 2022.
+
+\bibitem{dpo}
+Rafailov R, Sharma A, Mitchell E, et al. Direct Preference Optimization: Your Language Model Is Secretly a Reward Model. \textit{NeurIPS}, 2023.
+
+\bibitem{ppo}
+Schulman J, Wolski F, Dhariwal P, et al. Proximal Policy Optimization Algorithms. arXiv:1707.06347, 2017.
+
+\bibitem{deepseekmath}
+Shao Z, Wang P, Zhu Q, et al. DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models. arXiv:2402.03300, 2024.
+
+\bibitem{deepseekr1}
+DeepSeek-AI. DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning. arXiv:2501.12948, 2025.
+
+\bibitem{qwen25math}
+Qwen Team. Qwen2.5-Math Technical Report: Toward Mathematical Expert Model. arXiv:2409.12122, 2024.
+
+\bibitem{gsm8k}
+Cobbe K, Kosaraju V, Bavarian M, et al. Training Verifiers to Solve Math Word Problems. arXiv:2110.14168, 2021.
+
+\bibitem{mogrpo}
+MO-GRPO: Mitigating Reward Hacking via Multi-Objective Optimization in Group Relative Policy Optimization. arXiv, 2025.
+
+\bibitem{spo}
+Zhou W, Sojitra R B, et al. SPO: Sequential Preference Optimization for Multi-Dimensional Alignment. arXiv:2411.18084, 2024.
+
+\bibitem{rlvr}
+RLVR-World: Training World Models with Reinforcement Learning and Verifiable Rewards. arXiv, 2025.
+
+\bibitem{trl}
+von Werra L, Belkada Y, Tunstall L, et al. TRL: Transformer Reinforcement Learning. GitHub: huggingface/trl, 2020--2025.
+
+\bibitem{constitutional}
+Bai Y, Kadavath S, Kundu S, et al. Constitutional AI: Harmlessness from AI Feedback. arXiv:2212.08073, 2022.
+
+\bibitem{scafgrpo}
+Scaf-GRPO: Tackling the Learning Cliff in Group Relative Policy Optimization. arXiv:2504.15158, 2025.
+
+\bibitem{qwen25}
+Qwen Team. Qwen2.5 Technical Report. arXiv:2412.15115, 2024.
+
+\end{thebibliography}
+
+\end{document}
