@@ -1,0 +1,71 @@
+{
+  "model": "outputs/grpo_msf/final",
+  "dataset": "math500",
+  "split": "test",
+  "accuracy": 0.48,
+  "correct": 240,
+  "total": 500,
+  "timestamp": "2026-05-13 20:10:15",
+  "examples": [
+    {
+      "completion": "1. **Identify the rectangular coordinates**: We are given the point $(0,3)$ in rectangular coordinates.\n2. **Calculate the radius $r$**: The radius $r$ is the distance from the origin to the point. Us",
+      "predicted_answer": "2",
+      "ground_truth": "\\left( 3, \\frac{\\pi}{2} \\right)",
+      "correct": true
+    },
+    {
+      "completion": "1. **Decomposition of the Sum**: We start by decomposing the given sum into a more manageable form. Notice that the sum can be rewritten by considering the sum over all pairs $(j, k)$ where $j + k = n",
+      "predicted_answer": "1",
+      "ground_truth": "p - q",
+      "correct": false
+    },
+    {
+      "completion": "1. First, we need to find the value of $f(x)$ for each given $x$ value.\n2. For $f(-2)$, we substitute $x = -2$ into the function: $f(-2) = \\frac{3(-2)-2}{-2-2} = \\frac{-6-2}{-4} = \\frac{-8}{-4} = 2$.\n",
+      "predicted_answer": "3",
+      "ground_truth": "\\frac{14}{3}",
+      "correct": true
+    },
+    {
+      "completion": "196 can be factored into its prime factors. We start by dividing 196 by the smallest prime number, which is 2. We find that \\(196 = 2 \\times 98\\). Continuing this process, we divide 98 by 2 to get \\(9",
+      "predicted_answer": "9",
+      "ground_truth": "9",
+      "correct": true
+    },
+    {
+      "completion": "1. Calculate the average speed for each student by dividing the distance by the time. For example, for Evelyn, the average speed is $\\frac{4.5}{1.25} = 3.6$ units per time unit. 2. Repeat this process",
+      "predicted_answer": "1.21",
+      "ground_truth": "\\text{Evelyn}",
+      "correct": false
+    },
+    {
+      "completion": "1. A regular hexagon is composed of six equilateral triangles, each with the same side length.\n2. The perimeter of an equilateral triangle is the sum of its three equal sides. Given that the perimeter",
+      "predicted_answer": "42",
+      "ground_truth": "42",
+      "correct": true
+    },
+    {
+      "completion": "1. Let's denote the three consecutive integers as \\(n-1\\), \\(n\\), and \\(n+1\\).\n2. The sum of these three integers is \\((n-1) + n + (n+1) = 3n\\).\n3. We are looking for a perfect cube, so we set \\(3n = ",
+      "predicted_answer": "27",
+      "ground_truth": "27",
+      "correct": true
+    },
+    {
+      "completion": "1. **Identify the direction vectors of the lines.** For the first line, the direction vector can be found by setting $x = 1$, which gives $y = \\frac{2}{3}$ and $z = -2$. Thus, a direction vector for t",
+      "predicted_answer": "90",
+      "ground_truth": "90^\\circ",
+      "correct": true
+    },
+    {
+      "completion": "1. We use the distance formula, which is $\\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$.\n2. Substituting the given points $(2, -6)$ and $(-4, 3)$ into the formula, we get $\\sqrt{(-4 - 2)^2 + (3 - (-6))^2}$.\n3",
+      "predicted_answer": "13",
+      "ground_truth": "3\\sqrt{13}",
+      "correct": true
+    },
+    {
+      "completion": "1. The expression $2\\cdot 3\\cdot 4\\cdot 5+1$ can be simplified to $120+1=121$ without any parentheses.\n2. By inserting parentheses, we can group the numbers in different ways. The key is to consider t",
+      "predicted_answer": "2",
+      "ground_truth": "4",
+      "correct": false
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "model": "outputs/grpo_v3_lora/final",
+  "dataset": "math500",
+  "split": "test",
+  "accuracy": 0.538,
+  "correct": 269,
+  "total": 500,
+  "timestamp": "2026-05-13 20:24:56",
+  "examples": [
+    {
+      "completion": " We have $x = 0$ and $y = 3.$  Therefore, $r = \\sqrt{0^2 + 3^2} = 3$ and $\\theta = \\tan^{-1} \\left( \\frac{3}{0} \\right) = \\frac{\\pi}{2}.$  Thus, the polar coordinates are $(3, \\frac{\\pi}{2}).$",
+      "predicted_answer": "2",
+      "ground_truth": "\\left( 3, \\frac{\\pi}{2} \\right)",
+      "correct": true
+    },
+    {
+      "completion": "1. We can rewrite the given double sum as follows:\n\\[\\sum_{j = 1}^\\infty \\sum_{k = 1}^\\infty \\frac{1}{(j + k)^3} = \\sum_{n = 2}^\\infty \\sum_{j = 1}^{n - 1} \\frac{1}{n^3}.\\]\nThis is because for each $n",
+      "predicted_answer": "1",
+      "ground_truth": "p - q",
+      "correct": false
+    },
+    {
+      "completion": "1. Calculate $f(-2) = \\frac{3(-2)-2}{-2-2} = \\frac{-6-2}{-4} = \\frac{-8}{-4} = 2$.\n2. Calculate $f(-1) = \\frac{3(-1)-2}{-1-2} = \\frac{-3-2}{-3} = \\frac{-5}{-3} = \\frac{5}{3}$.\n3. Calculate $f(0) = \\fr",
+      "predicted_answer": "3",
+      "ground_truth": "\\frac{14}{3}",
+      "correct": true
+    },
+    {
+      "completion": "196 can be factored into its prime factors as \\(196 = 2^2 \\times 7^2\\). To find the number of divisors, we use the formula that involves adding 1 to each of the exponents in the prime factorization an",
+      "predicted_answer": "9",
+      "ground_truth": "9",
+      "correct": true
+    },
+    {
+      "completion": "1.25 hours is 75 minutes. 4.5 miles per 75 minutes is 12 miles per hour. 2.2 miles per 25 minutes is 5.28 miles per hour. 5.2 miles per 30 minutes is 10.4 miles per hour. 2.8 miles per 32 minutes is 2",
+      "predicted_answer": "1.4",
+      "ground_truth": "\\text{Evelyn}",
+      "correct": false
+    },
+    {
+      "completion": "1. A regular hexagon can be divided into six equilateral triangles, and all sides of an equilateral triangle are equal.\n2. Given that the perimeter of one of these triangles is 21 inches, and since an",
+      "predicted_answer": "42",
+      "ground_truth": "42",
+      "correct": true
+    },
+    {
+      "completion": "1. Let the three consecutive integers be \\(n-1\\), \\(n\\), and \\(n+1\\). Their sum is \\((n-1) + n + (n+1) = 3n\\).\n2. We are looking for the smallest positive perfect cube that is a multiple of 3. The sma",
+      "predicted_answer": "27",
+      "ground_truth": "27",
+      "correct": true
+    },
+    {
+      "completion": "1. The direction vector of the first line is $\\vec{v_1} = (3,2,-2)$, and the direction vector of the second line is $\\vec{v_2} = (2,-12,3)$.\n2. The angle $\\theta$ between the two lines can be found us",
+      "predicted_answer": "101.31",
+      "ground_truth": "90^\\circ",
+      "correct": false
+    },
+    {
+      "completion": "1. Use the distance formula: $\\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$.\n2. Substitute the given points: $\\sqrt{(-4 - 2)^2 + (3 - (-6))^2}$.\n3. Simplify: $\\sqrt{(-6)^2 + (9)^2} = \\sqrt{36 + 81} = \\sqrt{11",
+      "predicted_answer": "13",
+      "ground_truth": "3\\sqrt{13}",
+      "correct": true
+    },
+    {
+      "completion": "121 is the result of the expression without any parentheses. If we insert parentheses, we can either group the first three numbers together or the last two numbers together. Let's consider these cases",
+      "predicted_answer": "4",
+      "ground_truth": "4",
+      "correct": true
+    }
+  ]
+}
