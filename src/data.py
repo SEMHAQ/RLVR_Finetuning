@@ -13,6 +13,34 @@ SYSTEM_PROMPT = (
 BASE_PROMPT_TEMPLATE = "Question: {question}\nSolution: "
 
 
+def load_math500(split="test", use_chat_template=False):
+    """Load MATH-500 dataset and format for evaluation.
+
+    Args:
+        split: dataset split (usually 'test')
+        use_chat_template: if True, use chat message format
+
+    Returns a dataset with 'prompt' and 'answer' columns.
+    """
+    ds = load_dataset("HuggingFaceH4/MATH-500", split=split)
+
+    if use_chat_template:
+        def format_chat(example):
+            messages = [
+                {"role": "system", "content": "You are a math tutor. Solve the problem step by step, then put your final answer in \\boxed{}."},
+                {"role": "user", "content": example["problem"]},
+            ]
+            return {"prompt": messages, "answer": example["answer"]}
+        ds = ds.map(format_chat, remove_columns=[c for c in ds.column_names if c not in ["prompt", "answer"]])
+    else:
+        def format_base(example):
+            prompt = "Question: " + example["problem"] + "\nSolution: "
+            return {"prompt": prompt, "answer": example["answer"]}
+        ds = ds.map(format_base, remove_columns=[c for c in ds.column_names if c not in ["prompt", "answer"]])
+
+    return ds
+
+
 def load_gsm8k(split="train", use_chat_template=False):
     """Load GSM8K dataset and format for GRPO training.
 
@@ -51,6 +79,26 @@ def extract_answer(text):
     if match:
         return match.group(1).strip()
     # Fallback: try to find the last number in the text
+    numbers = re.findall(r"-?\d+(?:\.\d+)?", text)
+    if numbers:
+        return numbers[-1]
+    return None
+
+
+def extract_math_answer(text):
+    """Extract answer from \\boxed{} format (MATH dataset).
+
+    Returns the extracted string, or None if not found.
+    """
+    # Try \boxed{...} first
+    match = re.search(r"\\boxed\{([^}]*)\}", text)
+    if match:
+        return match.group(1).strip()
+    # Fallback: try boxed without backslash
+    match = re.search(r"boxed\{([^}]*)\}", text)
+    if match:
+        return match.group(1).strip()
+    # Fallback: try to find the last number
     numbers = re.findall(r"-?\d+(?:\.\d+)?", text)
     if numbers:
         return numbers[-1]
