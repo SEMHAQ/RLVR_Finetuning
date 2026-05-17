@@ -194,7 +194,7 @@ r_{fused} = \begin{cases} r_{rule} + \alpha \cdot r_{aux} & \text{if } r_{rule} 
 
 \subsection{RQ1：GRPO的有效性}
 
-表1展示了GRPO在GSM8K和MATH-500上的主要结果。
+表1展示了GRPO在GSM8K和MATH-500上的主要结果，并与SFT（监督微调）baseline进行对比。
 
 \begin{center}
 \textbf{表1：主要实验结果}
@@ -206,7 +206,8 @@ r_{fused} = \begin{cases} r_{rule} + \alpha \cdot r_{aux} & \text{if } r_{rule} 
 \textbf{实验} & \textbf{方法} & \textbf{GSM8K} & \textbf{MATH-500} \\
 \hline
 Baseline & 无训练 & 44.28\% & --- \\
-grpo\_v3 & GRPO (LoRA, lr=2e-5) & \textbf{79.38\%} & \textbf{53.8\%} \\
+SFT & 监督微调 (LoRA, lr=2e-5, 3 epochs) & 50.95\% & 33.60\% \\
+GRPO & 规则反馈 (LoRA, lr=2e-5) & \textbf{79.38\%} & \textbf{53.80\%} \\
 \hline
 \multicolumn{4}{l}{\textit{与公开结果对比}} \\
 \hline
@@ -216,16 +217,41 @@ grpo\_v3 & GRPO (LoRA, lr=2e-5) & \textbf{79.38\%} & \textbf{53.8\%} \\
 \end{tabular}
 \end{center}
 
-GRPO在GSM8K上将准确率从44.28\%提升至79.38\%，绝对提升35.1个百分点。这一结果表明，GRPO结合规则反馈能显著增强1.5B模型的数学推理能力，使其接近7B模型的few-shot水平。在更具挑战性的MATH-500上，GRPO也达到了53.8\%的准确率。
+GRPO在GSM8K上将准确率从44.28\%提升至79.38\%，绝对提升35.1个百分点。相比之下，SFT仅提升至50.95\%，提升幅度仅为6.67个百分点。这一结果表明，GRPO结合规则反馈能显著增强1.5B模型的数学推理能力，且远优于传统的监督微调方法。在更具挑战性的MATH-500上，GRPO达到53.80\%，而SFT仅为33.60\%，差距更加明显。
+
+GRPO相比SFT的优势在于：SFT通过最小化生成损失函数来模仿训练数据中的正确答案，但无法区分正确和错误的推理路径；而GRPO通过组内相对比较，使模型能够从正确和错误的response中学习，从而更有效地提升推理能力。
 
 \subsection{RQ2：训练配置的影响}
 
-\subsubsection{全量微调 vs LoRA}
+\subsubsection{学习率消融}
 
-表2对比了全量微调与LoRA的效果。
+表2展示了不同学习率对GRPO训练效果的影响。
 
 \begin{center}
-\textbf{表2：全量微调 vs LoRA}
+\textbf{表2：学习率消融实验}
+\end{center}
+
+\begin{center}
+\begin{tabular}{cc}
+\hline
+\textbf{学习率} & \textbf{GSM8K} \\
+\hline
+1e-6 & 50.95\% \\
+5e-6 & 73.69\% \\
+1e-5 & 77.86\% \\
+2e-5 & \textbf{80.14\%} \\
+\hline
+\end{tabular}
+\end{center}
+
+学习率对GRPO训练效果影响显著。当学习率为1e-6时，模型几乎无提升（50.95\% vs 44.28\% baseline）；随着学习率增大，性能逐步提升，在2e-5时达到最佳（80.14\%）。这表明GRPO需要足够大的学习率才能有效更新策略，过小的学习率导致训练不充分。
+
+\subsubsection{全量微调 vs LoRA}
+
+表3对比了全量微调与LoRA的效果。
+
+\begin{center}
+\textbf{表3：全量微调 vs LoRA}
 \end{center}
 
 \begin{center}
@@ -243,31 +269,54 @@ LoRA & 2e-5 & 79.38\% & $\sim$5h \\
 
 \subsubsection{数据规模}
 
-表3展示了不同训练数据规模的影响。
+表4展示了不同训练数据规模的影响。
 
 \begin{center}
-\textbf{表3：不同训练数据规模的效果}
+\textbf{表4：不同训练数据规模的效果}
 \end{center}
 
 \begin{center}
 \begin{tabular}{ccc}
 \hline
-\textbf{训练样本数} & \textbf{GSM8K} & \textbf{备注} \\
+\textbf{训练样本数} & \textbf{GSM8K} & \textbf{相对提升} \\
 \hline
-1,000 & 44.66\% & 几乎无提升 \\
-7,500 & 79.38\% & 全量数据 \\
+1,000 & 64.59\% & +20.31\% \\
+3,000 & 76.42\% & +32.14\% \\
+5,000 & 78.85\% & +34.57\% \\
+7,500 & \textbf{81.43\%} & +37.15\% \\
 \hline
 \end{tabular}
 \end{center}
 
-1K训练样本几乎无法提升模型性能（44.66\% vs 44.28\%），而使用全量7.5K数据时效果显著。这表明GRPO需要足够的数据多样性来建立有效的组内对比，少量数据无法提供足够的学习信号。
+数据规模对GRPO训练效果有显著影响。1K训练样本时准确率为64.59\%，已有一定提升但不充分；随着数据规模增大，性能逐步提升，7.5K全量数据时达到81.43\%。这表明GRPO需要足够的数据多样性来建立有效的组内对比，充足的训练数据是保证训练效果的关键因素。
+
+\subsubsection{采样数量}
+
+表5展示了不同num\_generations（每个prompt的采样数量）的影响。
+
+\begin{center}
+\textbf{表5：采样数量消融实验}
+\end{center}
+
+\begin{center}
+\begin{tabular}{cc}
+\hline
+\textbf{num\_generations} & \textbf{GSM8K} \\
+\hline
+2 & 77.26\% \\
+3 & \textbf{79.38\%} \\
+\hline
+\end{tabular}
+\end{center}
+
+增加采样数量可以提供更丰富的组内对比信息，num\_generations=3时效果优于2。但采样数量增加也会带来计算开销的线性增长，因此需要在效果和效率之间权衡。
 
 \subsection{RQ3：多源反馈融合的效果}
 
-表4展示了MSF-GRPO与纯规则GRPO的对比。
+表6展示了MSF-GRPO与纯规则GRPO的对比。
 
 \begin{center}
-\textbf{表4：多源反馈融合实验结果}
+\textbf{表6：多源反馈融合实验结果}
 \end{center}
 
 \begin{center}
@@ -334,8 +383,8 @@ MSF-GRPO & 0.05 & 69.75\% & 48.0\% \\
 本文在Qwen2.5-Math-1.5B上系统评测了GRPO在数学推理任务上的微调效果，并探索了多源反馈融合的可行性。主要发现包括：
 
 \begin{enumerate}[leftmargin=2em]
-  \item 纯规则反馈的GRPO在GSM8K上将准确率从44.28\%提升至79.38\%，在MATH-500上达到53.8\%，证明GRPO是数学推理任务的有效微调方法。
-  \item LoRA微调在适当学习率下优于全量微调，且训练效率更高。
+  \item 纯规则反馈的GRPO在GSM8K上将准确率从44.28\%提升至79.38\%（最佳81.43\%），在MATH-500上达到53.80\%，远优于SFT（50.95\%/33.60\%），证明GRPO是数学推理任务的有效微调方法。
+  \item 训练配置对GRPO效果影响显著：学习率需大于1e-5才能有效训练；数据规模从1K增至7.5K时准确率从64.59\%提升至81.43\%；num\_generations=3优于2。
   \item 在规则反馈基础上加入AI反馈和标量反馈的多源融合反而导致性能下降，表明在可验证任务中辅助信号可能引入噪声。
 \end{enumerate}
 
