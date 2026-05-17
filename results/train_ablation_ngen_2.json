@@ -1,0 +1,17 @@
+{
+  "model": "Qwen/Qwen2.5-Math-1.5B",
+  "reward": "rule",
+  "fusion_method": null,
+  "num_epochs": 1,
+  "batch_size": 4,
+  "grad_accum": 1,
+  "effective_batch": 8,
+  "num_generations": 2,
+  "learning_rate": 2e-05,
+  "beta": 0.0,
+  "use_lora": true,
+  "output_dir": "outputs/grpo_ablation_ngen_2",
+  "total_steps": 3736,
+  "train_loss": 0.0,
+  "timestamp": "2026-05-17 00:31:51"
+}
